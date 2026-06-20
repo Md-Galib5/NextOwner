@@ -9,9 +9,8 @@ import {
   Label,
   InputGroup,
   Input,
-  Radio,
-  RadioGroup,
 } from "@heroui/react";
+
 import {
   Eye,
   EyeSlash,
@@ -19,28 +18,26 @@ import {
   At,
   ShieldKeyhole,
 } from "@gravity-ui/icons";
+
 import {
   ShoppingBag,
   UserPlus,
   Store,
   ShoppingCart,
-  ShieldCheck,
   ArrowRight,
 } from "lucide-react";
-import { signUp } from "@/lib/auth-client";
+
 import { useRouter, useSearchParams } from "next/navigation";
+import { signUp } from "@/lib/auth-client";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // NextOwner roles
-  const [role, setRole] = useState("buyer");
-
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/";
+  const redirectTo = searchParams.get("redirect") || "/auth/signin";
 
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -61,21 +58,22 @@ export default function SignupPage() {
         email,
         password,
         name,
-        role,
       });
 
       if (authError) {
         setError(authError.message || "Something went wrong during signup.");
-      } else {
-        setSuccess("Account created successfully! Welcome to NextOwner.");
-        setName("");
-        setEmail("");
-        setPassword("");
-        setRole("buyer");
-        router.push(redirectTo);
+        return;
       }
+
+      setSuccess("Account created successfully! Welcome to NextOwner.");
+      setName("");
+      setEmail("");
+      setPassword("");
+
+      router.push(redirectTo);
     } catch (err) {
-      setError("An unexpected network error occurred.");
+      console.log("SIGNUP ERROR:", err);
+      setError(err.message || "An unexpected error occurred.");
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +82,6 @@ export default function SignupPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-white via-blue-50/40 to-slate-100 px-4 py-10">
       <div className="mx-auto grid min-h-[calc(100vh-80px)] max-w-6xl items-center gap-10 lg:grid-cols-2">
-        {/* LEFT BRAND SECTION */}
         <div className="hidden lg:block">
           <div className="max-w-xl">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-4 py-2 text-sm font-semibold text-blue-600 shadow-sm">
@@ -98,8 +95,7 @@ export default function SignupPage() {
 
             <p className="mt-5 max-w-lg text-lg leading-8 text-slate-600">
               Register to explore trusted second-hand products, save favorite
-              items, sell unused products, and manage your marketplace activity
-              from one dashboard.
+              items, sell unused products, and manage your marketplace activity.
             </p>
 
             <div className="mt-8 grid max-w-lg gap-4 sm:grid-cols-2">
@@ -126,7 +122,6 @@ export default function SignupPage() {
           </div>
         </div>
 
-        {/* FORM SECTION */}
         <Card className="mx-auto w-full max-w-md rounded-[2rem] border border-slate-200 bg-white/95 p-6 shadow-xl shadow-slate-200/70">
           <div className="mb-6 border-b border-slate-100 pb-6 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200">
@@ -143,7 +138,6 @@ export default function SignupPage() {
           </div>
 
           <form onSubmit={handleSignup} className="flex flex-col gap-5">
-            {/* Name */}
             <TextField isRequired name="name" className="flex flex-col gap-1.5">
               <Label className="text-sm font-medium text-slate-700">
                 Full Name
@@ -151,6 +145,7 @@ export default function SignupPage() {
 
               <InputGroup className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 transition-colors focus-within:border-blue-500 focus-within:bg-white">
                 <Person className="pointer-events-none text-slate-400" size={16} />
+
                 <Input
                   type="text"
                   placeholder="Enter your full name"
@@ -161,7 +156,6 @@ export default function SignupPage() {
               </InputGroup>
             </TextField>
 
-            {/* Email */}
             <TextField
               isRequired
               name="email"
@@ -174,7 +168,9 @@ export default function SignupPage() {
 
               <InputGroup className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 transition-colors focus-within:border-blue-500 focus-within:bg-white">
                 <At className="pointer-events-none text-slate-400" size={16} />
+
                 <Input
+                  type="email"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -183,7 +179,6 @@ export default function SignupPage() {
               </InputGroup>
             </TextField>
 
-            {/* Password */}
             <TextField
               isRequired
               name="password"
@@ -217,40 +212,6 @@ export default function SignupPage() {
                 </button>
               </InputGroup>
             </TextField>
-
-           <div className="flex flex-col gap-3">
-  <Label className="text-sm font-medium text-slate-700">
-    Account Type
-  </Label>
-
-  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-    <button
-      type="button"
-      onClick={() => setRole("buyer")}
-      className={`rounded-2xl border p-4 text-left transition ${
-        role === "buyer"
-          ? "border-blue-500 bg-blue-50"
-          : "border-slate-200 bg-slate-50 hover:border-blue-300"
-      }`}
-    >
-      <p className="font-semibold text-slate-900">Buyer</p>
-      <p className="text-xs text-slate-500">Browse and purchase products</p>
-    </button>
-
-    <button
-      type="button"
-      onClick={() => setRole("seller")}
-      className={`rounded-2xl border p-4 text-left transition ${
-        role === "seller"
-          ? "border-blue-500 bg-blue-50"
-          : "border-slate-200 bg-slate-50 hover:border-blue-300"
-      }`}
-    >
-      <p className="font-semibold text-slate-900">Seller</p>
-      <p className="text-xs text-slate-500">List and sell your products</p>
-    </button>
-  </div>
-</div>
 
             {error && (
               <div className="rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs font-medium text-red-700">
