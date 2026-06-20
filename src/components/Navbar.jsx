@@ -112,9 +112,9 @@ export default function Navbar() {
                     <p className="truncate text-sm text-slate-500">
                       {user.email}
                     </p>
-                    {/* <span className="mt-2 inline-block rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-600">
-                      Buyer
-                    </span> */}
+                    <span className="mt-2 inline-block rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-600">
+                      {user.role}
+                    </span>
                   </div>
 
                   <Link

@@ -42,23 +42,23 @@ export default function HeroBanner() {
     },
   };
 
-  const features = [
-    {
-      icon: ShieldCheck,
-      title: "Safe & Secure",
-      text: "Trusted deals",
-    },
-    {
-      icon: Tags,
-      title: "Great Deals",
-      text: "Save more",
-    },
-    {
-      icon: Leaf,
-      title: "Sustainable",
-      text: "Reuse smarter",
-    },
-  ];
+const features = [
+  {
+    icon: ShieldCheck,
+    title: "2K+",
+    text: "Trusted users",
+  },
+  {
+    icon: Tags,
+    title: "5K+",
+    text: "Products listed",
+  },
+  {
+    icon: Leaf,
+    title: "1K+",
+    text: "Items reused",
+  },
+];
 
   return (
     <section className="overflow-hidden bg-white">

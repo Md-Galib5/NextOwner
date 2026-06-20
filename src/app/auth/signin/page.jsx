@@ -209,7 +209,7 @@ export default function SigninPage() {
             <div className="mt-2 border-t border-slate-100 pt-4 text-center text-sm text-slate-500">
               New to NextOwner?{" "}
               <Link
-                href={`/auth/signup?redirect=${redirectTo}`}
+                href={`/auth/register?redirect=${redirectTo}`}
                 className="cursor-pointer text-sm font-semibold text-blue-600 hover:text-blue-700"
               >
                 Create an account
