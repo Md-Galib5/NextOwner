@@ -2,19 +2,42 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Button } from "@heroui/react";
-import LOGO from "../../public/logo.png";
 import Image from "next/image";
+import { Button } from "@heroui/react";
+
+import {
+  LogIn,
+  UserPlus,
+  ShoppingCart,
+  PackagePlus,
+} from "lucide-react";
+
+import LOGO from "../../public/logo.png";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
-    { label: "Home", href: "/" },
-    { label: "Products", href: "/products" },
-    { label: "Categories", href: "/categories" },
-    { label: "About Us", href: "/about" },
-    { label: "Contact", href: "/contact" },
+    {
+      label: "Home",
+      href: "/",
+    },
+    {
+      label: "Products",
+      href: "/products",
+    },
+    {
+      label: "Categories",
+      href: "/categories",
+    },
+    {
+      label: "About Us",
+      href: "/about",
+    },
+    {
+      label: "Contact",
+      href: "/contact",
+    },
   ];
 
   return (
@@ -34,6 +57,7 @@ export default function Navbar() {
 
         {/* DESKTOP MENU */}
         <div className="hidden items-center gap-6 lg:flex">
+          {/* NAV LINKS */}
           <ul className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
             {navLinks.map((link) => (
               <li key={link.href}>
@@ -49,26 +73,31 @@ export default function Navbar() {
 
           <div className="h-6 w-px bg-slate-200" />
 
-          <div className="flex items-center gap-3">
-            <Button
-              as={Link}
-              href="/dashboard/add-product"
-              radius="lg"
-              variant="bordered"
-              className="border-blue-200 text-blue-600 hover:bg-blue-50"
-            >
-              Sell Item
-            </Button>
+          {/* ACTION BUTTONS */}
+          <div className="flex items-center gap-2">
+  <Link
+    href="/auth/signin"
+    className="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+  >
+    Sign In
+  </Link>
 
-            <Button
-              as={Link}
-              href="/products"
-              radius="lg"
-              className="h-11 bg-blue-600 px-6 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              Browse Products
-            </Button>
-          </div>
+   <Link
+    href="/auth/register"
+    className="rounded-xl px-4 py-2 text-sm font-medium bg-blue-600 text-white transition hover:bg-blue-700 hover:text-white"
+  >
+    Register
+  </Link>
+
+  {/* <Button
+    as={Link}
+    href="/register"
+    radius="lg"
+    className="bg-blue-600 px-5 text-white hover:bg-blue-500"
+  >
+    Register
+  </Button> */}
+</div>
         </div>
 
         {/* MOBILE MENU BUTTON */}
@@ -115,6 +144,7 @@ export default function Navbar() {
       {isMenuOpen && (
         <div className="border-t border-slate-200 bg-white lg:hidden">
           <div className="space-y-4 px-4 py-6 sm:px-6">
+            {/* NAVIGATION */}
             <ul className="space-y-2">
               {navLinks.map((link) => (
                 <li key={link.href}>
@@ -129,27 +159,32 @@ export default function Navbar() {
               ))}
             </ul>
 
-            <div className="grid gap-3 border-t border-slate-200 pt-4 sm:grid-cols-2">
+            {/* MOBILE ACTIONS */}
+            <div className="grid gap-3 border-t border-slate-200 pt-4">
               <Button
                 as={Link}
-                href="/dashboard/add-product"
+                href="/signin"
                 radius="lg"
-                variant="bordered"
-                className="w-full border-blue-200 text-blue-600"
+                variant="light"
+                startContent={<LogIn className="h-4 w-4" />}
                 onClick={() => setIsMenuOpen(false)}
               >
-                Sell Item
+                Sign In
               </Button>
 
               <Button
                 as={Link}
-                href="/products"
+                href="/register"
                 radius="lg"
-                className="w-full bg-blue-600 font-semibold text-white"
+                variant="bordered"
+                startContent={<UserPlus className="h-4 w-4" />}
                 onClick={() => setIsMenuOpen(false)}
               >
-                Browse Products
+                Register
               </Button>
+
+
+             
             </div>
           </div>
         </div>
