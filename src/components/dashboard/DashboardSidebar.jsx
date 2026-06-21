@@ -32,7 +32,7 @@ export function DashboardSidebar({ role = "buyer" }) {
 
   const sellerLinks = [
     { icon: Home, href: "/dashboard/seller", label: "Overview" },
-    { icon: PackagePlus, href: "/dashboard/seller/add-product", label: "Add Product" },
+    { icon: PackagePlus, href: "/dashboard/seller/products/new", label: "Add Product" },
     { icon: Package, href: "/dashboard/seller/products", label: "My Products" },
     { icon: ClipboardList, href: "/dashboard/seller/orders", label: "Manage Orders" },
     { icon: BarChart3, href: "/dashboard/seller/analytics", label: "Sales Analytics" },

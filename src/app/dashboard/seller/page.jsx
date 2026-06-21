@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import Link from "next/link";
 
 export default function SellerDashboardPage() {
   const { data: session, isPending } = useSession();
@@ -137,29 +138,42 @@ export default function SellerDashboardPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur">
-            <motion.div
-              whileHover={{ y: -4, scale: 1.03 }}
-              className="rounded-2xl bg-blue-50 p-4"
-            >
-              <TrendingUp className="h-5 w-5 text-blue-600" />
-              <p className="mt-3 text-2xl font-black text-slate-950">84%</p>
-              <p className="text-xs font-medium text-slate-500">
-                Sales growth
-              </p>
-            </motion.div>
+        <motion.div
+  whileHover={{ y: -4, scale: 1.03 }}
+  whileTap={{ scale: 0.97 }}
+  className="w-full lg:w-auto"
+>
+  <Link
+    href="/dashboard/seller/products/new"
+    className="group relative inline-flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-blue-600 px-6 py-4 text-sm font-bold text-white shadow-xl shadow-blue-200 transition hover:bg-blue-700 lg:w-auto"
+  >
+    <motion.span
+      animate={{ x: ["-120%", "220%"] }}
+      transition={{
+        duration: 2.2,
+        repeat: Infinity,
+        ease: "linear",
+      }}
+      className="absolute inset-y-0 left-0 w-24 skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+    />
 
-            <motion.div
-              whileHover={{ y: -4, scale: 1.03 }}
-              className="rounded-2xl bg-green-50 p-4"
-            >
-              <ShieldCheck className="h-5 w-5 text-green-600" />
-              <p className="mt-3 text-2xl font-black text-slate-950">Trusted</p>
-              <p className="text-xs font-medium text-slate-500">
-                Seller account
-              </p>
-            </motion.div>
-          </div>
+    <motion.div
+      animate={{ rotate: 360 }}
+      transition={{
+        duration: 4,
+        repeat: Infinity,
+        ease: "linear",
+      }}
+      className="relative z-10"
+    >
+      <PackagePlus className="h-5 w-5" />
+    </motion.div>
+
+    <span className="relative z-10">Add New Product</span>
+
+    <ArrowRight className="relative z-10 h-4 w-4 transition group-hover:translate-x-1" />
+  </Link>
+</motion.div>
         </div>
       </motion.section>
 

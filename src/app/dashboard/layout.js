@@ -1,4 +1,5 @@
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import { ToastContainer } from "react-toastify";
 
 export default function DashboardLayout({ children }) {
   const role = "seller";
@@ -9,6 +10,12 @@ export default function DashboardLayout({ children }) {
 
       <main className="w-full flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
         {children}
+
+          <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          theme="light"
+        />
       </main>
     </div>
   );
