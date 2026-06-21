@@ -21,8 +21,8 @@ export default function BuyerDashboardPage() {
 
   if (isPending) {
     return (
-      <div className="flex h-40 items-center justify-center text-slate-500">
-        Loading...
+      <div className="flex h-[60vh] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
       </div>
     );
   }
@@ -43,26 +43,93 @@ export default function BuyerDashboardPage() {
   ];
 
   return (
-    <div className="space-y-8">
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={{
+        hidden: {},
+        visible: {
+          transition: {
+            staggerChildren: 0.1,
+          },
+        },
+      }}
+      className="space-y-8"
+    >
       <motion.section
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45 }}
-        className="relative overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-100/60"
+        variants={{
+          hidden: { opacity: 0, y: 28 },
+          visible: { opacity: 1, y: 0 },
+        }}
+        animate={{
+          boxShadow: [
+            "0 0 0px rgba(37,99,235,0.10)",
+            "0 0 32px rgba(37,99,235,0.28)",
+            "0 0 0px rgba(37,99,235,0.10)",
+          ],
+        }}
+        transition={{
+          duration: 0.5,
+          boxShadow: {
+            duration: 3.2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          },
+        }}
+        className="relative overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-6"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50" />
-        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-200/30 blur-2xl" />
-        <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-indigo-200/30 blur-2xl" />
+        <motion.div
+          animate={{ scale: [1, 1.12, 1], opacity: [0.35, 0.55, 0.35] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-300/30 blur-2xl"
+        />
+        <motion.div
+          animate={{ scale: [1, 1.15, 1], opacity: [0.25, 0.5, 0.25] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-indigo-300/30 blur-2xl"
+        />
 
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-4 py-2 text-sm font-semibold text-blue-600 shadow-sm">
-              <Sparkles className="h-4 w-4" />
+              <motion.div
+                animate={{ rotate: 360, scale: [1, 1.15, 1] }}
+                transition={{
+                  rotate: { duration: 4, repeat: Infinity, ease: "linear" },
+                  scale: {
+                    duration: 1.6,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
+                }}
+              >
+                <Sparkles className="h-4 w-4" />
+              </motion.div>
               Buyer Dashboard
             </div>
 
-            <h1 className="text-3xl font-black text-slate-950 sm:text-4xl">
-              Welcome back, {user?.name || "Buyer"} 👋
+            <h1 className="text-3xl font-black leading-tight text-slate-950 sm:text-4xl">
+              Welcome back,{" "}
+              <motion.span
+                animate={{
+                  backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                  filter: [
+                    "drop-shadow(0 0 0px rgba(37,99,235,0))",
+                    "drop-shadow(0 0 10px rgba(37,99,235,0.35))",
+                    "drop-shadow(0 0 0px rgba(37,99,235,0))",
+                  ],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+                className="inline-block bg-gradient-to-r from-slate-950 via-blue-600 via-cyan-500 to-slate-950 bg-[length:250%_auto] bg-clip-text text-transparent"
+              >
+                {user?.name || "Buyer"}
+              </motion.span>{" "}
+              👋
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
@@ -72,40 +139,48 @@ export default function BuyerDashboardPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur">
-            <div className="rounded-2xl bg-blue-50 p-4">
+            <motion.div
+              whileHover={{ y: -4, scale: 1.03 }}
+              className="rounded-2xl bg-blue-50 p-4"
+            >
               <TrendingUp className="h-5 w-5 text-blue-600" />
               <p className="mt-3 text-2xl font-black text-slate-950">92%</p>
               <p className="text-xs font-medium text-slate-500">
                 Order success
               </p>
-            </div>
+            </motion.div>
 
-            <div className="rounded-2xl bg-green-50 p-4">
+            <motion.div
+              whileHover={{ y: -4, scale: 1.03 }}
+              className="rounded-2xl bg-green-50 p-4"
+            >
               <ShieldCheck className="h-5 w-5 text-green-600" />
               <p className="mt-3 text-2xl font-black text-slate-950">Safe</p>
               <p className="text-xs font-medium text-slate-500">
                 Buyer protected
               </p>
-            </div>
+            </motion.div>
           </div>
         </div>
       </motion.section>
 
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, delay: 0.1 }}
+        variants={{
+          hidden: { opacity: 0, y: 24 },
+          visible: { opacity: 1, y: 0 },
+        }}
       >
         <DashboardStats statsData={buyerStats} />
       </motion.div>
 
       <motion.section
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, delay: 0.2 }}
+        variants={{
+          hidden: { opacity: 0, y: 24 },
+          visible: { opacity: 1, y: 0 },
+        }}
         className="grid gap-6 xl:grid-cols-3"
       >
-        <div className="xl:col-span-2 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm xl:col-span-2">
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-slate-950">
@@ -129,12 +204,11 @@ export default function BuyerDashboardPage() {
                 initial={{ opacity: 0, x: -18 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.35, delay: 0.25 + index * 0.08 }}
+                whileHover={{ x: 6, scale: 1.01 }}
                 className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:bg-white hover:shadow-md"
               >
                 <div>
-                  <h3 className="font-semibold text-slate-900">
-                    {item.name}
-                  </h3>
+                  <h3 className="font-semibold text-slate-900">{item.name}</h3>
                   <p className="mt-1 text-sm text-slate-500">{item.price}</p>
                 </div>
 
@@ -154,10 +228,17 @@ export default function BuyerDashboardPage() {
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-slate-200 bg-slate-950 p-6 text-white shadow-xl">
-          <div className="rounded-2xl bg-white/10 p-3 w-fit">
+        <motion.div
+          whileHover={{ y: -5, scale: 1.01 }}
+          className="rounded-[2rem] border border-slate-800 bg-slate-950 p-6 text-white shadow-xl"
+        >
+          <motion.div
+            animate={{ y: [0, -5, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="w-fit rounded-2xl bg-white/10 p-3"
+          >
             <Heart className="h-6 w-6 text-pink-300" />
-          </div>
+          </motion.div>
 
           <h2 className="mt-5 text-xl font-bold">Wishlist Insight</h2>
           <p className="mt-2 text-sm leading-6 text-slate-300">
@@ -169,8 +250,8 @@ export default function BuyerDashboardPage() {
             Open Wishlist
             <ArrowRight className="h-4 w-4" />
           </button>
-        </div>
+        </motion.div>
       </motion.section>
-    </div>
+    </motion.div>
   );
 }
