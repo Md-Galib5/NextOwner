@@ -118,20 +118,22 @@ export default function Navbar() {
                   </div>
 
                   <Link
-                    href="/dashboard"
-                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                  >
-                    <LayoutDashboard className="h-4 w-4" />
-                    Dashboard
-                  </Link>
+  href={`/dashboard/${user?.role || "buyer"}`}
+  onClick={() => setIsUserOpen(false)}
+  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+>
+  <LayoutDashboard className="h-4 w-4" />
+  Dashboard
+</Link>
 
-                  <Link
-                    href="/profile"
-                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                  >
-                    <User className="h-4 w-4" />
-                    Profile
-                  </Link>
+<Link
+  href="/profile"
+  onClick={() => setIsUserOpen(false)}
+  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+>
+  <User className="h-4 w-4" />
+  Profile
+</Link>
 
                   <button
                     onClick={handleSignOut}
@@ -201,9 +203,14 @@ export default function Navbar() {
                     <p className="text-sm text-slate-500">{user.email}</p>
                   </div>
 
-                  <Button as={Link} href="/dashboard" variant="bordered">
-                    Dashboard
-                  </Button>
+                  <Button
+  as={Link}
+  href={`/dashboard/${user?.role || "buyer"}`}
+  variant="bordered"
+  onClick={() => setIsMenuOpen(false)}
+>
+  Dashboard
+</Button>
 
                   <Button as={Link} href="/profile" variant="bordered">
                     Profile
