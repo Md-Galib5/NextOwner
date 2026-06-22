@@ -265,10 +265,14 @@ export default function SellerDashboardPage() {
             improve buyer trust and sales performance.
           </p>
 
-          <button className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-slate-100">
-            Add Product
-            <ArrowRight className="h-4 w-4" />
-          </button>
+           <Link href="/dashboard/seller/products/new">
+  <button
+    className="mt-6 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-950 shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-100 hover:shadow-lg"
+  >
+    Add Product
+    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+  </button>
+</Link>
         </motion.div>
       </motion.section>
     </motion.div>

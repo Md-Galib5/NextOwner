@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Form,
   Fieldset,
@@ -24,6 +25,7 @@ import { addproducts } from "@/lib/actions/products";
 import { toast } from "react-toastify";
 
 export default function AddProductPage() {
+  const router = useRouter();
   const { data: session, isPending } = useSession();
 
   const formRef = useRef(null);
@@ -40,9 +42,7 @@ export default function AddProductPage() {
 
   const user = session?.user;
 
-  const addImageField = () => {
-    setImageUrls([...imageUrls, ""]);
-  };
+  const addImageField = () => setImageUrls([...imageUrls, ""]);
 
   const updateImageUrl = (index, value) => {
     const updated = [...imageUrls];
@@ -111,6 +111,10 @@ export default function AddProductPage() {
         formRef.current?.reset();
         setImageUrls([""]);
         setErrors({});
+
+        setTimeout(() => {
+          router.push("/dashboard/seller");
+        }, 1500);
       } else {
         toast.error("Failed to add product");
       }
@@ -159,7 +163,11 @@ export default function AddProductPage() {
             </legend>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <TextField name="title" isInvalid={!!errors.title} className="flex w-full flex-col gap-1">
+              <TextField
+                name="title"
+                isInvalid={!!errors.title}
+                className="flex w-full flex-col gap-1"
+              >
                 <Label className="text-sm font-semibold text-slate-700">
                   Product Title
                 </Label>
@@ -168,21 +176,24 @@ export default function AddProductPage() {
                   placeholder="e.g. Used Dell Inspiron 15 Laptop"
                   className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white"
                 />
-                {errors.title && <p className="text-xs text-red-500">{errors.title}</p>}
+                {errors.title && (
+                  <p className="text-xs text-red-500">{errors.title}</p>
+                )}
               </TextField>
 
               <Select name="category" isInvalid={!!errors.category}>
                 <Label className="mb-1 block text-sm font-semibold text-slate-700">
                   Category
                 </Label>
-
                 <Select.Trigger className="flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none transition data-[focused=true]:border-blue-500">
                   <Select.Value placeholder="Select category" />
                   <Select.Indicator />
                 </Select.Trigger>
-
-                {errors.category && <p className="mt-1 text-xs text-red-500">{errors.category}</p>}
-
+                {errors.category && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.category}
+                  </p>
+                )}
                 <Select.Popover className="rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
                   <ListBox>
                     {[
@@ -216,17 +227,24 @@ export default function AddProductPage() {
                 <Label className="mb-1 block text-sm font-semibold text-slate-700">
                   Condition
                 </Label>
-
                 <Select.Trigger className="flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none transition data-[focused=true]:border-blue-500">
                   <Select.Value placeholder="Select condition" />
                   <Select.Indicator />
                 </Select.Trigger>
-
-                {errors.condition && <p className="mt-1 text-xs text-red-500">{errors.condition}</p>}
-
+                {errors.condition && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.condition}
+                  </p>
+                )}
                 <Select.Popover className="rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
                   <ListBox>
-                    {["Like New", "Excellent", "Good", "Fair", "Refurbished"].map((item) => (
+                    {[
+                      "Like New",
+                      "Excellent",
+                      "Good",
+                      "Fair",
+                      "Refurbished",
+                    ].map((item) => (
                       <ListBox.Item
                         key={item}
                         id={item}
@@ -241,8 +259,14 @@ export default function AddProductPage() {
               </Select>
 
               <div className="grid grid-cols-2 gap-4">
-                <TextField name="price" isInvalid={!!errors.price} className="flex w-full flex-col gap-1">
-                  <Label className="text-sm font-semibold text-slate-700">Price</Label>
+                <TextField
+                  name="price"
+                  isInvalid={!!errors.price}
+                  className="flex w-full flex-col gap-1"
+                >
+                  <Label className="text-sm font-semibold text-slate-700">
+                    Price
+                  </Label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                     <Input
@@ -252,11 +276,19 @@ export default function AddProductPage() {
                       className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-9 text-sm outline-none transition focus:border-blue-500 focus:bg-white"
                     />
                   </div>
-                  {errors.price && <p className="text-xs text-red-500">{errors.price}</p>}
+                  {errors.price && (
+                    <p className="text-xs text-red-500">{errors.price}</p>
+                  )}
                 </TextField>
 
-                <TextField name="stock" isInvalid={!!errors.stock} className="flex w-full flex-col gap-1">
-                  <Label className="text-sm font-semibold text-slate-700">Stock</Label>
+                <TextField
+                  name="stock"
+                  isInvalid={!!errors.stock}
+                  className="flex w-full flex-col gap-1"
+                >
+                  <Label className="text-sm font-semibold text-slate-700">
+                    Stock
+                  </Label>
                   <div className="relative">
                     <Boxes className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                     <Input
@@ -266,7 +298,9 @@ export default function AddProductPage() {
                       className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-9 text-sm outline-none transition focus:border-blue-500 focus:bg-white"
                     />
                   </div>
-                  {errors.stock && <p className="text-xs text-red-500">{errors.stock}</p>}
+                  {errors.stock && (
+                    <p className="text-xs text-red-500">{errors.stock}</p>
+                  )}
                 </TextField>
               </div>
             </div>
@@ -304,7 +338,9 @@ export default function AddProductPage() {
                 </div>
               ))}
 
-              {errors.images && <p className="text-xs text-red-500">{errors.images}</p>}
+              {errors.images && (
+                <p className="text-xs text-red-500">{errors.images}</p>
+              )}
 
               <Button
                 type="button"
@@ -322,28 +358,39 @@ export default function AddProductPage() {
               Description
             </legend>
 
-            <TextField name="description" isInvalid={!!errors.description} className="flex w-full flex-col gap-1">
+            <TextField
+              name="description"
+              isInvalid={!!errors.description}
+              className="flex w-full flex-col gap-1"
+            >
               <Label className="text-sm font-semibold text-slate-700">
                 Product Description
               </Label>
-
               <TextArea
                 name="description"
                 rows={5}
                 placeholder="Dell Inspiron 15, Core i5 10th Gen, 8GB RAM, 512GB SSD. Used for 2 years."
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white"
               />
-
-              {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
+              {errors.description && (
+                <p className="text-xs text-red-500">{errors.description}</p>
+              )}
             </TextField>
           </Fieldset>
 
           <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
-            <Button type="button" variant="bordered" className="h-12 rounded-xl border-slate-200 px-6 font-semibold text-slate-600">
+            <Button
+              type="button"
+              variant="bordered"
+              className="h-12 rounded-xl border-slate-200 px-6 font-semibold text-slate-600"
+            >
               Cancel
             </Button>
 
-            <Button type="submit" className="h-12 rounded-xl bg-blue-600 px-6 font-semibold text-white hover:bg-blue-700">
+            <Button
+              type="submit"
+              className="h-12 rounded-xl bg-blue-600 px-6 font-semibold text-white hover:bg-blue-700"
+            >
               Publish Product
             </Button>
           </div>
