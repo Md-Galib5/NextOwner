@@ -95,7 +95,6 @@ export default function AddProductPage() {
         userId: user?.id,
         name: user?.name,
         email: user?.email,
-        phone: user?.phone || "",
       },
       status: "available",
       createdAt: new Date(),
