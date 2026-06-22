@@ -8,6 +8,14 @@ export const getUserById = async (id) => {
   return res.json();
 };
 
+export const getUserByEmail = async (email) => {
+  const res = await fetch(`${baseUrl}/api/users/by-email/${email}`, {
+    cache: "no-store",
+  });
+
+  return res.json();
+};
+
 export const updateSellerProfile = async (id, data) => {
   const res = await fetch(`${baseUrl}/api/users/${id}/seller-profile`, {
     method: "PATCH",

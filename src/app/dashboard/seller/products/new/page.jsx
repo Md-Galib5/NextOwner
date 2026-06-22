@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Form,
@@ -20,8 +20,10 @@ import {
   DollarSign,
   Boxes,
   Sparkles,
+  AlertTriangle,
 } from "lucide-react";
 import { addproducts } from "@/lib/actions/products";
+import { getUserByEmail } from "@/lib/api/user";
 import { toast } from "react-toastify";
 
 export default function AddProductPage() {
@@ -31,8 +33,22 @@ export default function AddProductPage() {
   const formRef = useRef(null);
   const [errors, setErrors] = useState({});
   const [imageUrls, setImageUrls] = useState([""]);
+  const [dbUser, setDbUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
 
-  if (isPending) {
+  useEffect(() => {
+    const loadUser = async () => {
+      if (!session?.user?.email) return;
+
+      const user = await getUserByEmail(session.user.email);
+      setDbUser(user);
+      setUserLoading(false);
+    };
+
+    loadUser();
+  }, [session]);
+
+  if (isPending || userLoading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
@@ -40,7 +56,29 @@ export default function AddProductPage() {
     );
   }
 
-  const user = session?.user;
+  if (!dbUser?.sellerProfileCompleted) {
+    return (
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="h-6 w-6 text-red-600" />
+          <h2 className="text-xl font-bold text-red-700">
+            Complete your seller profile first
+          </h2>
+        </div>
+
+        <p className="mt-2 text-sm text-red-600">
+          You must add phone, location, and photo before adding products.
+        </p>
+
+        <Button
+          onClick={() => router.push("/dashboard/seller/profile")}
+          className="mt-5 rounded-xl bg-red-600 px-5 py-2 font-semibold text-white hover:bg-red-700"
+        >
+          Complete Profile
+        </Button>
+      </div>
+    );
+  }
 
   const addImageField = () => setImageUrls([...imageUrls, ""]);
 
@@ -92,9 +130,12 @@ export default function AddProductPage() {
       images: cleanImages,
       description: data.description,
       sellerInfo: {
-        userId: user?.id,
-        name: user?.name,
-        email: user?.email,
+        userId: dbUser?._id,
+        name: dbUser?.name,
+        email: dbUser?.email,
+        phone: dbUser?.phone,
+        location: dbUser?.location,
+        photo: dbUser?.photo,
       },
       status: "available",
       createdAt: new Date(),
@@ -104,7 +145,7 @@ export default function AddProductPage() {
       const res = await addproducts(productPayload);
 
       if (res.insertedId) {
-        toast.success("Products added successfully");
+        toast.success("Product added successfully");
 
         form.reset();
         formRef.current?.reset();
@@ -162,18 +203,14 @@ export default function AddProductPage() {
             </legend>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <TextField
-                name="title"
-                isInvalid={!!errors.title}
-                className="flex w-full flex-col gap-1"
-              >
+              <TextField name="title" isInvalid={!!errors.title}>
                 <Label className="text-sm font-semibold text-slate-700">
                   Product Title
                 </Label>
                 <Input
                   name="title"
                   placeholder="e.g. Used Dell Inspiron 15 Laptop"
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white"
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:border-blue-500"
                 />
                 {errors.title && (
                   <p className="text-xs text-red-500">{errors.title}</p>
@@ -184,16 +221,18 @@ export default function AddProductPage() {
                 <Label className="mb-1 block text-sm font-semibold text-slate-700">
                   Category
                 </Label>
-                <Select.Trigger className="flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none transition data-[focused=true]:border-blue-500">
+                <Select.Trigger className="flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm">
                   <Select.Value placeholder="Select category" />
                   <Select.Indicator />
                 </Select.Trigger>
+
                 {errors.category && (
                   <p className="mt-1 text-xs text-red-500">
                     {errors.category}
                   </p>
                 )}
-                <Select.Popover className="rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+
+                <Select.Popover className="rounded-xl border bg-white p-1 shadow-xl">
                   <ListBox>
                     {[
                       "Electronics",
@@ -207,12 +246,7 @@ export default function AddProductPage() {
                       "Vehicles",
                       "Others",
                     ].map((item) => (
-                      <ListBox.Item
-                        key={item}
-                        id={item}
-                        textValue={item}
-                        className="cursor-pointer rounded-lg p-2 text-sm hover:bg-blue-50"
-                      >
+                      <ListBox.Item key={item} id={item} textValue={item}>
                         {item}
                       </ListBox.Item>
                     ))}
@@ -226,43 +260,32 @@ export default function AddProductPage() {
                 <Label className="mb-1 block text-sm font-semibold text-slate-700">
                   Condition
                 </Label>
-                <Select.Trigger className="flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none transition data-[focused=true]:border-blue-500">
+                <Select.Trigger className="flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm">
                   <Select.Value placeholder="Select condition" />
                   <Select.Indicator />
                 </Select.Trigger>
+
                 {errors.condition && (
                   <p className="mt-1 text-xs text-red-500">
                     {errors.condition}
                   </p>
                 )}
-                <Select.Popover className="rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+
+                <Select.Popover className="rounded-xl border bg-white p-1 shadow-xl">
                   <ListBox>
-                    {[
-                      "Like New",
-                      "Excellent",
-                      "Good",
-                      "Fair",
-                      "Refurbished",
-                    ].map((item) => (
-                      <ListBox.Item
-                        key={item}
-                        id={item}
-                        textValue={item}
-                        className="cursor-pointer rounded-lg p-2 text-sm hover:bg-blue-50"
-                      >
-                        {item}
-                      </ListBox.Item>
-                    ))}
+                    {["Like New", "Excellent", "Good", "Fair", "Refurbished"].map(
+                      (item) => (
+                        <ListBox.Item key={item} id={item} textValue={item}>
+                          {item}
+                        </ListBox.Item>
+                      )
+                    )}
                   </ListBox>
                 </Select.Popover>
               </Select>
 
               <div className="grid grid-cols-2 gap-4">
-                <TextField
-                  name="price"
-                  isInvalid={!!errors.price}
-                  className="flex w-full flex-col gap-1"
-                >
+                <TextField name="price" isInvalid={!!errors.price}>
                   <Label className="text-sm font-semibold text-slate-700">
                     Price
                   </Label>
@@ -272,7 +295,7 @@ export default function AddProductPage() {
                       name="price"
                       type="number"
                       placeholder="35000"
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-9 text-sm outline-none transition focus:border-blue-500 focus:bg-white"
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-9 text-sm outline-none focus:border-blue-500"
                     />
                   </div>
                   {errors.price && (
@@ -280,11 +303,7 @@ export default function AddProductPage() {
                   )}
                 </TextField>
 
-                <TextField
-                  name="stock"
-                  isInvalid={!!errors.stock}
-                  className="flex w-full flex-col gap-1"
-                >
+                <TextField name="stock" isInvalid={!!errors.stock}>
                   <Label className="text-sm font-semibold text-slate-700">
                     Stock
                   </Label>
@@ -294,7 +313,7 @@ export default function AddProductPage() {
                       name="stock"
                       type="number"
                       placeholder="1"
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-9 text-sm outline-none transition focus:border-blue-500 focus:bg-white"
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-9 text-sm outline-none focus:border-blue-500"
                     />
                   </div>
                   {errors.stock && (
@@ -306,70 +325,54 @@ export default function AddProductPage() {
           </Fieldset>
 
           <Fieldset className="w-full space-y-5">
-            <legend className="mb-2 w-full border-b border-slate-100 pb-3 text-lg font-bold text-slate-900">
+            <legend className="mb-2 border-b border-slate-100 pb-3 text-lg font-bold text-slate-900">
               Product Images
             </legend>
 
-            <div className="space-y-3">
-              {imageUrls.map((url, index) => (
-                <div key={index} className="flex gap-3">
-                  <div className="relative flex-1">
-                    <ImagePlus className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <Input
-                      type="url"
-                      value={url}
-                      onChange={(e) => updateImageUrl(index, e.target.value)}
-                      placeholder="https://example.com/images/product.jpg"
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-9 text-sm outline-none transition focus:border-blue-500 focus:bg-white"
-                    />
-                  </div>
-
-                  {imageUrls.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="bordered"
-                      className="h-12 rounded-xl border-red-200 text-red-600"
-                      onClick={() => removeImageField(index)}
-                    >
-                      Remove
-                    </Button>
-                  )}
+            {imageUrls.map((url, index) => (
+              <div key={index} className="flex gap-3">
+                <div className="relative flex-1">
+                  <ImagePlus className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    type="url"
+                    value={url}
+                    onChange={(e) => updateImageUrl(index, e.target.value)}
+                    placeholder="https://example.com/images/product.jpg"
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-9 text-sm outline-none focus:border-blue-500"
+                  />
                 </div>
-              ))}
 
-              {errors.images && (
-                <p className="text-xs text-red-500">{errors.images}</p>
-              )}
+                {imageUrls.length > 1 && (
+                  <Button type="button" onClick={() => removeImageField(index)}>
+                    Remove
+                  </Button>
+                )}
+              </div>
+            ))}
 
-              <Button
-                type="button"
-                variant="bordered"
-                className="rounded-xl border-blue-200 text-blue-600"
-                onClick={addImageField}
-              >
-                Add Another Image
-              </Button>
-            </div>
+            {errors.images && (
+              <p className="text-xs text-red-500">{errors.images}</p>
+            )}
+
+            <Button type="button" onClick={addImageField}>
+              Add Another Image
+            </Button>
           </Fieldset>
 
           <Fieldset className="w-full space-y-5">
-            <legend className="mb-2 w-full border-b border-slate-100 pb-3 text-lg font-bold text-slate-900">
+            <legend className="mb-2 border-b border-slate-100 pb-3 text-lg font-bold text-slate-900">
               Description
             </legend>
 
-            <TextField
-              name="description"
-              isInvalid={!!errors.description}
-              className="flex w-full flex-col gap-1"
-            >
+            <TextField name="description" isInvalid={!!errors.description}>
               <Label className="text-sm font-semibold text-slate-700">
                 Product Description
               </Label>
               <TextArea
                 name="description"
                 rows={5}
-                placeholder="Dell Inspiron 15, Core i5 10th Gen, 8GB RAM, 512GB SSD. Used for 2 years."
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white"
+                placeholder="Product description..."
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-blue-500"
               />
               {errors.description && (
                 <p className="text-xs text-red-500">{errors.description}</p>
@@ -377,15 +380,7 @@ export default function AddProductPage() {
             </TextField>
           </Fieldset>
 
-          <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="bordered"
-              className="h-12 rounded-xl border-slate-200 px-6 font-semibold text-slate-600"
-            >
-              Cancel
-            </Button>
-
+          <div className="flex justify-end border-t border-slate-100 pt-6">
             <Button
               type="submit"
               className="h-12 rounded-xl bg-blue-600 px-6 font-semibold text-white hover:bg-blue-700"
