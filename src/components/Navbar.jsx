@@ -127,7 +127,7 @@ export default function Navbar() {
 </Link>
 
 <Link
-  href="/profile"
+  href={`/dashboard/${user?.role}/profile`}
   onClick={() => setIsUserOpen(false)}
   className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
 >

@@ -13,3 +13,24 @@ export const getSellerProducts = async (
 
   return res.json();
 };
+
+
+export const addproducts = async (newProductsData) => {
+  try {
+    const res = await fetch(`${baseUrl}/api/products`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newProductsData),
+      cache: "no-store",
+    });
+
+    return await res.json();
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
+};

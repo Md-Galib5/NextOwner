@@ -27,3 +27,15 @@ export const updateSellerProfile = async (id, data) => {
 
   return res.json();
 };
+
+export const updateBuyerProfile = async (id, data) => {
+  const res = await fetch(`${baseUrl}/api/users/${id}/buyer-profile`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  return res.json();
+};

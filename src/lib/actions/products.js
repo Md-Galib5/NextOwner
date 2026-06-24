@@ -13,11 +13,65 @@ export const addproducts = async (newProductsData) => {
       cache: "no-store",
     });
 
-    const data = await res.json();
-
-    return data;
+    return await res.json();
   } catch (error) {
     console.error("Add Product Error:", error);
+
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
+};
+
+export const getProductById = async (id) => {
+  try {
+    const res = await fetch(`${baseUrl}/api/products/${id}`, {
+      cache: "no-store",
+    });
+
+    return await res.json();
+  } catch (error) {
+    console.error("Get Product Error:", error);
+
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
+};
+
+export const updateProduct = async (id, data) => {
+  try {
+    const res = await fetch(`${baseUrl}/api/products/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    return await res.json();
+  } catch (error) {
+    console.error("Update Product Error:", error);
+
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
+};
+
+export const deleteProduct = async (id) => {
+  try {
+    const res = await fetch(`${baseUrl}/api/products/${id}`, {
+      method: "DELETE",
+    });
+
+    return await res.json();
+  } catch (error) {
+    console.error("Delete Product Error:", error);
+
     return {
       success: false,
       message: error.message,

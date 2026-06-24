@@ -21,6 +21,7 @@ import {
   Boxes,
   Sparkles,
   AlertTriangle,
+  X,
 } from "lucide-react";
 import { addproducts } from "@/lib/actions/products";
 import { getUserByEmail } from "@/lib/api/user";
@@ -32,9 +33,11 @@ export default function AddProductPage() {
 
   const formRef = useRef(null);
   const [errors, setErrors] = useState({});
-  const [imageUrls, setImageUrls] = useState([""]);
   const [dbUser, setDbUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -47,6 +50,56 @@ export default function AddProductPage() {
 
     loadUser();
   }, [session]);
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files || []);
+
+    if (files.length === 0) return;
+
+    const validFiles = files.filter((file) => file.type.startsWith("image/"));
+
+    if (validFiles.length !== files.length) {
+      toast.error("Only image files are allowed");
+      return;
+    }
+
+    setImageFiles((prev) => [...prev, ...validFiles]);
+
+    const previews = validFiles.map((file) => URL.createObjectURL(file));
+    setImagePreviews((prev) => [...prev, ...previews]);
+  };
+
+  const removeImage = (index) => {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadImagesToImgBB = async () => {
+    const uploadedUrls = [];
+
+    for (const file of imageFiles) {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await fetch(
+        `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_API_KEY}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error("Image upload failed");
+      }
+
+      uploadedUrls.push(data.data.url);
+    }
+
+    return uploadedUrls;
+  };
 
   if (isPending || userLoading) {
     return (
@@ -80,18 +133,6 @@ export default function AddProductPage() {
     );
   }
 
-  const addImageField = () => setImageUrls([...imageUrls, ""]);
-
-  const updateImageUrl = (index, value) => {
-    const updated = [...imageUrls];
-    updated[index] = value;
-    setImageUrls(updated);
-  };
-
-  const removeImageField = (index) => {
-    setImageUrls(imageUrls.filter((_, i) => i !== index));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -107,12 +148,7 @@ export default function AddProductPage() {
     if (!data.price) newErrors.price = "Price is required";
     if (!data.stock) newErrors.stock = "Stock quantity is required";
     if (!data.description) newErrors.description = "Description is required";
-
-    const cleanImages = imageUrls.filter((url) => url.trim() !== "");
-
-    if (cleanImages.length === 0) {
-      newErrors.images = "At least one product image URL is required";
-    }
+    if (imageFiles.length === 0) newErrors.images = "At least one image is required";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -120,28 +156,31 @@ export default function AddProductPage() {
     }
 
     setErrors({});
-
-    const productPayload = {
-      title: data.title,
-      category: data.category,
-      condition: data.condition,
-      price: Number(data.price),
-      stock: Number(data.stock),
-      images: cleanImages,
-      description: data.description,
-      sellerInfo: {
-        userId: dbUser?._id,
-        name: dbUser?.name,
-        email: dbUser?.email,
-        phone: dbUser?.phone,
-        location: dbUser?.location,
-        photo: dbUser?.photo,
-      },
-      status: "available",
-      createdAt: new Date(),
-    };
+    setIsUploading(true);
 
     try {
+      const uploadedImages = await uploadImagesToImgBB();
+
+      const productPayload = {
+        title: data.title,
+        category: data.category,
+        condition: data.condition,
+        price: Number(data.price),
+        stock: Number(data.stock),
+        images: uploadedImages,
+        description: data.description,
+        sellerInfo: {
+          userId: dbUser?._id,
+          name: dbUser?.name,
+          email: dbUser?.email,
+          phone: dbUser?.phone,
+          location: dbUser?.location,
+          photo: dbUser?.photo,
+        },
+        status: "available",
+        createdAt: new Date(),
+      };
+
       const res = await addproducts(productPayload);
 
       if (res.insertedId) {
@@ -149,7 +188,8 @@ export default function AddProductPage() {
 
         form.reset();
         formRef.current?.reset();
-        setImageUrls([""]);
+        setImageFiles([]);
+        setImagePreviews([]);
         setErrors({});
 
         setTimeout(() => {
@@ -160,7 +200,9 @@ export default function AddProductPage() {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Something went wrong");
+      toast.error(error.message || "Something went wrong");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -183,7 +225,7 @@ export default function AddProductPage() {
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Create a trusted second-hand product listing for NextOwner.
+              Upload product images and create a trusted listing.
             </p>
           </div>
         </div>
@@ -226,12 +268,6 @@ export default function AddProductPage() {
                   <Select.Indicator />
                 </Select.Trigger>
 
-                {errors.category && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.category}
-                  </p>
-                )}
-
                 <Select.Popover className="rounded-xl border bg-white p-1 shadow-xl">
                   <ListBox>
                     {[
@@ -265,12 +301,6 @@ export default function AddProductPage() {
                   <Select.Indicator />
                 </Select.Trigger>
 
-                {errors.condition && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.condition}
-                  </p>
-                )}
-
                 <Select.Popover className="rounded-xl border bg-white p-1 shadow-xl">
                   <ListBox>
                     {["Like New", "Excellent", "Good", "Fair", "Refurbished"].map(
@@ -298,9 +328,6 @@ export default function AddProductPage() {
                       className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-9 text-sm outline-none focus:border-blue-500"
                     />
                   </div>
-                  {errors.price && (
-                    <p className="text-xs text-red-500">{errors.price}</p>
-                  )}
                 </TextField>
 
                 <TextField name="stock" isInvalid={!!errors.stock}>
@@ -316,9 +343,6 @@ export default function AddProductPage() {
                       className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-9 text-sm outline-none focus:border-blue-500"
                     />
                   </div>
-                  {errors.stock && (
-                    <p className="text-xs text-red-500">{errors.stock}</p>
-                  )}
                 </TextField>
               </div>
             </div>
@@ -329,34 +353,52 @@ export default function AddProductPage() {
               Product Images
             </legend>
 
-            {imageUrls.map((url, index) => (
-              <div key={index} className="flex gap-3">
-                <div className="relative flex-1">
-                  <ImagePlus className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    type="url"
-                    value={url}
-                    onChange={(e) => updateImageUrl(index, e.target.value)}
-                    placeholder="https://example.com/images/product.jpg"
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-9 text-sm outline-none focus:border-blue-500"
-                  />
-                </div>
+            <label className="flex min-h-[170px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-blue-200 bg-blue-50/50 p-6 text-center transition hover:bg-blue-50">
+              <ImagePlus className="h-10 w-10 text-blue-600" />
+              <p className="mt-3 text-sm font-bold text-slate-800">
+                Click to upload product images
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                PNG, JPG, JPEG, WEBP supported
+              </p>
 
-                {imageUrls.length > 1 && (
-                  <Button type="button" onClick={() => removeImageField(index)}>
-                    Remove
-                  </Button>
-                )}
-              </div>
-            ))}
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </label>
 
             {errors.images && (
               <p className="text-xs text-red-500">{errors.images}</p>
             )}
 
-            <Button type="button" onClick={addImageField}>
-              Add Another Image
-            </Button>
+            {imagePreviews.length > 0 && (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                {imagePreviews.map((src, index) => (
+                  <div
+                    key={index}
+                    className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
+                  >
+                    <img
+                      src={src}
+                      alt={`Preview ${index + 1}`}
+                      className="h-32 w-full object-cover"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute right-2 top-2 rounded-full bg-red-600 p-1 text-white shadow"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </Fieldset>
 
           <Fieldset className="w-full space-y-5">
@@ -374,18 +416,16 @@ export default function AddProductPage() {
                 placeholder="Product description..."
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-blue-500"
               />
-              {errors.description && (
-                <p className="text-xs text-red-500">{errors.description}</p>
-              )}
             </TextField>
           </Fieldset>
 
           <div className="flex justify-end border-t border-slate-100 pt-6">
             <Button
               type="submit"
+              isDisabled={isUploading}
               className="h-12 rounded-xl bg-blue-600 px-6 font-semibold text-white hover:bg-blue-700"
             >
-              Publish Product
+              {isUploading ? "Uploading..." : "Publish Product"}
             </Button>
           </div>
         </Form>
