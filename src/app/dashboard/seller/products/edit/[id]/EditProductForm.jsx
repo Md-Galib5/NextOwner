@@ -152,12 +152,12 @@ export default function EditProductForm({ product }) {
       const res = await updateProduct(product._id, payload);
 
       if (res?.success || res?.modifiedCount > 0) {
-        toast.success("Product updated successfully");
-        router.push("/dashboard/seller/products");
-        router.refresh();
-      } else {
-        toast.error(res?.message || "Failed to update product");
-      }
+  toast.success("Product updated successfully");
+
+  router.replace("/dashboard/seller/products");
+} else {
+  toast.error(res?.message || "Failed to update product");
+}
     } catch (error) {
       toast.error(error.message || "Something went wrong");
     } finally {
