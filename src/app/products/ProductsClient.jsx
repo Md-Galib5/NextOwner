@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "react-toastify";
+import { useSession } from "@/lib/auth-client";
 import {
   ShoppingBag,
   BadgeCheck,
@@ -10,7 +12,6 @@ import {
   DollarSign,
   Eye,
   ShoppingCart,
-  User,
   Search,
   SlidersHorizontal,
 } from "lucide-react";
@@ -39,6 +40,7 @@ export default function ProductsClient({
   },
 }) {
   const router = useRouter();
+  const { data: session, isPending } = useSession();
   const [searchText, setSearchText] = useState(filters.search || "");
 
   const updateFilter = (key, value) => {
@@ -65,6 +67,23 @@ export default function ProductsClient({
   const clearFilters = () => {
     setSearchText("");
     router.push("/products");
+  };
+
+  const handleBuyNow = (productId) => {
+    if (isPending) return;
+
+    if (!session?.user?.email) {
+      toast.error("Please login first");
+      router.push(`/auth/signin?redirect=/products`);
+      return;
+    }
+
+    if (session?.user?.role !== "buyer") {
+      toast.error("Only buyers can buy products");
+      return;
+    }
+
+    router.push(`/checkout/${productId}`);
   };
 
   return (
@@ -236,19 +255,6 @@ export default function ProductsClient({
                     </div>
                   </div>
 
-                  {/* <div className="mt-5 flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-indigo-700 shadow-sm">
-                      <User className="h-4 w-4" />
-                    </div>
-
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-slate-400">Seller</p>
-                      <p className="line-clamp-1 text-sm font-bold text-slate-700">
-                        {product.sellerInfo?.name || "Unknown Seller"}
-                      </p>
-                    </div>
-                  </div> */}
-
                   <div className="mt-5 space-y-3">
                     <Link
                       href={`/products/${product._id}`}
@@ -261,7 +267,9 @@ export default function ProductsClient({
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-200"
+                        onClick={() => handleBuyNow(product._id)}
+                        disabled={isPending}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-200 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <ShoppingCart className="h-4 w-4" />
                         Buy Now

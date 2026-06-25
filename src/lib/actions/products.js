@@ -2,6 +2,7 @@
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
+
 export const addproducts = async (newProductsData) => {
   try {
     const res = await fetch(`${baseUrl}/api/products`, {
@@ -13,7 +14,30 @@ export const addproducts = async (newProductsData) => {
       cache: "no-store",
     });
 
-    return await res.json();
+    const text = await res.text();
+
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.error("Non JSON response:", text);
+
+      return {
+        success: false,
+        message:
+          "Server did not return JSON. Check if POST /api/products exists in backend.",
+      };
+    }
+
+    if (!res.ok) {
+      return {
+        success: false,
+        message: data?.message || "Failed to add product",
+      };
+    }
+
+    return data;
   } catch (error) {
     console.error("Add Product Error:", error);
 
@@ -23,6 +47,28 @@ export const addproducts = async (newProductsData) => {
     };
   }
 };
+
+// export const addproducts = async (newProductsData) => {
+//   try {
+//     const res = await fetch(`${baseUrl}/api/products`, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify(newProductsData),
+//       cache: "no-store",
+//     });
+
+//     return await res.json();
+//   } catch (error) {
+//     console.error("Add Product Error:", error);
+
+//     return {
+//       success: false,
+//       message: error.message,
+//     };
+//   }
+// };
 
 export const getProductById = async (id) => {
   try {

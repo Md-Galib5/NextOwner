@@ -1,41 +1,97 @@
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
-export const getUserById = async (id) => {
-  const res = await fetch(`${baseUrl}/api/users/${id}`, {
-    cache: "no-store",
-  });
+const safeJson = async (res) => {
+  const text = await res.text();
 
-  return res.json();
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error("Non JSON response:", text);
+    return null;
+  }
+};
+
+export const getUserById = async (id) => {
+  if (!id) return null;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/users/${id}`, {
+      cache: "no-store",
+    });
+
+    return await safeJson(res);
+  } catch (error) {
+    console.error("Get user by id error:", error);
+    return null;
+  }
 };
 
 export const getUserByEmail = async (email) => {
-  const res = await fetch(`${baseUrl}/api/users/by-email/${email}`, {
-    cache: "no-store",
-  });
+  if (!email) return null;
 
-  return res.json();
+  try {
+    const res = await fetch(
+      `${baseUrl}/api/users/by-email/${encodeURIComponent(email)}`,
+      {
+        cache: "no-store",
+      }
+    );
+
+    return await safeJson(res);
+  } catch (error) {
+    console.error("Get user by email error:", error);
+    return null;
+  }
 };
 
-export const updateSellerProfile = async (id, data) => {
-  const res = await fetch(`${baseUrl}/api/users/${id}/seller-profile`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+export const updateSellerProfile = async (email, data) => {
+  try {
+    const res = await fetch(
+      `${baseUrl}/api/users/by-email/${encodeURIComponent(
+        email
+      )}/seller-profile`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
 
-  return res.json();
+    return await safeJson(res);
+  } catch (error) {
+    console.error("Update seller profile error:", error);
+
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
 };
 
-export const updateBuyerProfile = async (id, data) => {
-  const res = await fetch(`${baseUrl}/api/users/${id}/buyer-profile`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+export const updateBuyerProfile = async (email, data) => {
+  try {
+    const res = await fetch(
+      `${baseUrl}/api/users/by-email/${encodeURIComponent(
+        email
+      )}/buyer-profile`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
 
-  return res.json();
+    return await safeJson(res);
+  } catch (error) {
+    console.error("Update buyer profile error:", error);
+
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
 };

@@ -8,6 +8,7 @@ import { Camera, MapPin, Phone, ShieldCheck, User } from "lucide-react";
 
 const SellerProfileForm = ({ user }) => {
   const router = useRouter();
+  // console.log(user)
 
   const [phone, setPhone] = useState(user?.phone || "");
   const [location, setLocation] = useState(user?.location || "");
