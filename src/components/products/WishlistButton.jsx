@@ -7,21 +7,25 @@ import { useSession } from "@/lib/auth-client";
 
 export default function WishlistButton({ product }) {
   const { data: session, isPending } = useSession();
+
   const [loading, setLoading] = useState(false);
   const [added, setAdded] = useState(false);
 
   const handleWishlist = async () => {
-    if (isPending || loading) return;
+    if (loading || isPending || added) return;
 
     if (!session?.user?.email) {
-      toast.error("Please login first");
+      toast.error("Please login first", {
+        toastId: "wishlist-login-error",
+        autoClose: 2000,
+      });
       return;
     }
 
     try {
       setLoading(true);
 
-      const res = await fetch(
+      const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/wishlist`,
         {
           method: "POST",
@@ -35,18 +39,30 @@ export default function WishlistButton({ product }) {
         }
       );
 
-      const data = await res.json();
+      const data = await response.json();
 
-      if (!res.ok || !data.success) {
-        toast.error(data?.message || "Failed to add wishlist");
+      if (response.ok) {
+        setAdded(true);
+
+        toast.success(data?.message || "Added to wishlist", {
+          toastId: `wishlist-added-${product?._id}`,
+          autoClose: 2000,
+        });
+
         return;
       }
 
-      setAdded(true);
-      toast.success(data?.message || "Added to wishlist");
+      toast.error(data?.message || "Failed to add wishlist", {
+        toastId: `wishlist-error-${product?._id}`,
+        autoClose: 2000,
+      });
     } catch (error) {
-      console.error("Wishlist error:", error);
-      toast.error("Something went wrong");
+      console.error(error);
+
+      toast.error("Something went wrong", {
+        toastId: `wishlist-catch-${product?._id}`,
+        autoClose: 2000,
+      });
     } finally {
       setLoading(false);
     }
@@ -57,16 +73,16 @@ export default function WishlistButton({ product }) {
       type="button"
       onClick={handleWishlist}
       disabled={loading || isPending || added}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold transition disabled:opacity-70 ${
+      className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-70 ${
         added
           ? "border-rose-300 bg-rose-50 text-rose-600"
-          : "border-slate-200 bg-white text-slate-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+          : "border-slate-200 bg-white text-slate-700 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
       }`}
     >
       <Heart
         size={18}
         fill={added ? "currentColor" : "none"}
-        className={loading ? "animate-ping" : added ? "scale-110" : ""}
+        className={loading ? "animate-pulse" : ""}
       />
 
       {loading ? "Adding..." : added ? "Added" : "Wishlist"}

@@ -9,7 +9,30 @@ export default async function WishlistPage() {
   });
 
   const email = session?.user?.email;
-  const items = email ? await getWishlist(email) : [];
+
+  let items = [];
+
+  if (email) {
+    try {
+      const result = await getWishlist(email);
+
+      // Handle different response shapes
+      if (Array.isArray(result)) {
+        items = result;
+      } else if (Array.isArray(result?.items)) {
+        items = result.items;
+      } else if (Array.isArray(result?.wishlist)) {
+        items = result.wishlist;
+      } else if (Array.isArray(result?.data)) {
+        items = result.data;
+      } else {
+        items = [];
+      }
+    } catch (error) {
+      console.error("Wishlist Error:", error);
+      items = [];
+    }
+  }
 
   return <WishlistClient items={items} />;
 }

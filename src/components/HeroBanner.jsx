@@ -44,19 +44,19 @@ export default function HeroBanner() {
 
 const features = [
   {
-    icon: ShieldCheck,
-    title: "2K+",
-    text: "Trusted users",
+    icon: BadgeCheck,
+    title: "Verified sellers",
+    text: "Shop from trusted people",
   },
   {
-    icon: Tags,
-    title: "5K+",
-    text: "Products listed",
+    icon: Truck,
+    title: "Easy local deals",
+    text: "Buy and sell nearby",
   },
   {
-    icon: Leaf,
-    title: "1K+",
-    text: "Items reused",
+    icon: ShoppingBag,
+    title: "Quality finds",
+    text: "Discover better deals",
   },
 ];
 

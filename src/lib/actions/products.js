@@ -41,6 +41,52 @@ export const getProductById = async (id) => {
   }
 };
 
+export const getWishlist = async (email) => {
+  try {
+    const res = await fetch(`${baseUrl}/api/wishlist/user/${email}`, {
+      cache: "no-store",
+    });
+
+    const data = await res.json();
+
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data.wishlist)) return data.wishlist;
+    if (Array.isArray(data.items)) return data.items;
+    if (Array.isArray(data.data)) return data.data;
+
+    return [];
+  } catch (error) {
+    console.error("Get Wishlist Error:", error);
+
+    return [];
+  }
+};
+
+export const removeWishlist = async (id) => {
+  try {
+    const res = await fetch(`${baseUrl}/api/wishlist/${id}`, {
+      method: "DELETE",
+      cache: "no-store",
+    });
+
+    const data = await res.json();
+
+    return {
+      success: data.success || data.deletedCount > 0,
+      deletedCount: data.deletedCount || 0,
+      message: data.message || "Wishlist item removed",
+    };
+  } catch (error) {
+    console.error("Remove Wishlist Error:", error);
+
+    return {
+      success: false,
+      deletedCount: 0,
+      message: error.message,
+    };
+  }
+};
+
 export const updateProduct = async (id, data) => {
   try {
     const res = await fetch(`${baseUrl}/api/products/${id}`, {
@@ -49,6 +95,7 @@ export const updateProduct = async (id, data) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
+      cache: "no-store",
     });
 
     return await res.json();
@@ -66,6 +113,7 @@ export const deleteProduct = async (id) => {
   try {
     const res = await fetch(`${baseUrl}/api/products/${id}`, {
       method: "DELETE",
+      cache: "no-store",
     });
 
     return await res.json();
@@ -104,38 +152,5 @@ export const getSellerProducts = async ({
     console.error("Get Seller Products Error:", error);
 
     return [];
-  }
-};
-
-
-export const getWishlist = async (email) => {
-  try {
-    const res = await fetch(`${baseUrl}/api/wishlist/user/${email}`, {
-      cache: "no-store",
-    });
-
-    return await res.json();
-  } catch (error) {
-    return {
-      success: false,
-      message: error.message,
-      wishlist: [],
-    };
-  }
-};
-
-export const removeWishlist = async (id) => {
-  try {
-    const res = await fetch(`${baseUrl}/api/wishlist/${id}`, {
-      method: "DELETE",
-      cache: "no-store",
-    });
-
-    return await res.json();
-  } catch (error) {
-    return {
-      success: false,
-      message: error.message,
-    };
   }
 };
