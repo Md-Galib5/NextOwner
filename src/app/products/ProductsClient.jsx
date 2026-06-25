@@ -49,12 +49,8 @@ export default function ProductsClient({
     const nextSort = key === "sort" ? value : filters.sort;
 
     if (nextSearch) params.set("search", nextSearch);
-    if (nextCategory && nextCategory !== "all") {
-      params.set("category", nextCategory);
-    }
-    if (nextSort && nextSort !== "latest") {
-      params.set("sort", nextSort);
-    }
+    if (nextCategory && nextCategory !== "all") params.set("category", nextCategory);
+    if (nextSort && nextSort !== "latest") params.set("sort", nextSort);
 
     router.push(`/products?${params.toString()}`);
   };
@@ -256,12 +252,18 @@ export default function ProductsClient({
                   </Link>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-cyan-600 hover:shadow-lg hover:shadow-cyan-200">
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-cyan-600 hover:shadow-lg hover:shadow-cyan-200"
+                    >
                       <ShoppingCart className="h-4 w-4" />
                       Buy Now
                     </button>
 
-                    <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-50 px-4 py-3 text-sm font-bold text-cyan-700 transition hover:bg-cyan-100">
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-50 px-4 py-3 text-sm font-bold text-cyan-700 transition hover:bg-cyan-100"
+                    >
                       <Heart className="h-4 w-4" />
                       Wishlist
                     </button>

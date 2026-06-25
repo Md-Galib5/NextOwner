@@ -12,6 +12,7 @@ import {
   User,
   Mail,
 } from "lucide-react";
+import WishlistButton from "@/components/products/WishlistButton";
 
 const getProductById = async (id) => {
   const res = await fetch(
@@ -98,10 +99,7 @@ export default async function ProductsDetailsPage({ params }) {
               Buy Now
             </button>
 
-            <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-50 px-5 py-3 text-sm font-bold text-cyan-700 transition hover:bg-cyan-100">
-              <Heart className="h-4 w-4" />
-              Add Wishlist
-            </button>
+           <WishlistButton product={product} />
           </div>
         </div>
       </div>
