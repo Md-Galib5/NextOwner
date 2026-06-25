@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { deleteProduct } from "@/lib/actions/products";
@@ -16,19 +16,64 @@ import {
   Sparkles,
   Search,
   BadgeCheck,
+  SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
 
-export default function SellerProductsClient({ products = [] }) {
+const categories = [
+  "all",
+  "Electronics",
+  "Mobile Phones",
+  "Computers",
+  "Fashion",
+  "Furniture",
+  "Home Appliances",
+  "Sports",
+  "Books",
+  "Vehicles",
+  "Others",
+];
+
+export default function SellerProductsClient({
+  products = [],
+  filters = {
+    search: "",
+    category: "all",
+    sort: "latest",
+  },
+}) {
   const router = useRouter();
-  const [searchText, setSearchText] = useState("");
+
+  const [searchText, setSearchText] = useState(filters.search || "");
   const [deletingId, setDeletingId] = useState(null);
 
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) =>
-      product.title?.toLowerCase().includes(searchText.toLowerCase())
-    );
-  }, [products, searchText]);
+  const updateFilter = (key, value) => {
+    const params = new URLSearchParams();
+
+    const nextSearch = key === "search" ? value : filters.search;
+    const nextCategory = key === "category" ? value : filters.category;
+    const nextSort = key === "sort" ? value : filters.sort;
+
+    if (nextSearch) params.set("search", nextSearch);
+    if (nextCategory && nextCategory !== "all") {
+      params.set("category", nextCategory);
+    }
+    if (nextSort && nextSort !== "latest") {
+      params.set("sort", nextSort);
+    }
+
+    router.push(`/dashboard/seller/products?${params.toString()}`);
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    updateFilter("search", searchText.trim());
+  };
+
+  const clearFilters = () => {
+    setSearchText("");
+    router.push("/dashboard/seller/products");
+  };
 
   const handleDelete = async (id) => {
     const confirmDelete = confirm("Are you sure you want to delete this product?");
@@ -45,7 +90,7 @@ export default function SellerProductsClient({ products = [] }) {
       } else {
         toast.error(res.message || "Failed to delete product");
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong");
     } finally {
       setDeletingId(null);
@@ -75,53 +120,92 @@ export default function SellerProductsClient({ products = [] }) {
 
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
               {products.length > 0
-                ? `You have ${products.length} product${
+                ? `Showing ${products.length} product${
                     products.length > 1 ? "s" : ""
-                  } listed.`
-                : "No products added yet. Start by publishing your first product."}
+                  }.`
+                : "No products found for the current filters."}
             </p>
           </div>
 
-          <div className="flex flex-col items-center gap-3 sm:flex-row">
-            <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-2 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
-                Total Products
-              </p>
-              <p className="text-lg font-black text-blue-700">
-                {products.length}
-              </p>
-            </div>
-
-            <Link
-              href="/dashboard/seller/products/new"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-xs font-bold text-white transition hover:bg-blue-600"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add Product
-            </Link>
-          </div>
+          <Link
+            href="/dashboard/seller/products/new"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-xs font-bold text-white transition hover:bg-blue-600"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Product
+          </Link>
         </div>
       </motion.div>
 
-      {products.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
+        <form
+          onSubmit={handleSearchSubmit}
+          className="grid gap-3 lg:grid-cols-[1fr_220px_220px_120px]"
         >
-          <Search className="h-4 w-4 text-slate-400" />
+          <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4">
+            <Search className="h-4 w-4 text-slate-400" />
 
-          <input
-            type="text"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            placeholder="Search products..."
-            className="w-full bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-400"
-          />
-        </motion.div>
-      )}
+            <input
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Search title, category, description..."
+              className="w-full bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-400"
+            />
+          </div>
 
-      {filteredProducts.length === 0 ? (
+          <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4">
+            <SlidersHorizontal className="h-4 w-4 text-slate-400" />
+
+            <select
+              value={filters.category}
+              onChange={(e) => updateFilter("category", e.target.value)}
+              className="w-full bg-transparent text-sm font-bold text-slate-700 outline-none"
+            >
+              {categories.map((item) => (
+                <option key={item} value={item}>
+                  {item === "all" ? "All Categories" : item}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4">
+            <DollarSign className="h-4 w-4 text-slate-400" />
+
+            <select
+              value={filters.sort}
+              onChange={(e) => updateFilter("sort", e.target.value)}
+              className="w-full bg-transparent text-sm font-bold text-slate-700 outline-none"
+            >
+              <option value="latest">Latest First</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            className="h-12 rounded-2xl bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700"
+          >
+            Search
+          </button>
+        </form>
+
+        <button
+          type="button"
+          onClick={clearFilters}
+          className="mt-3 text-sm font-bold text-slate-500 transition hover:text-blue-600"
+        >
+          Clear filters
+        </button>
+      </motion.div>
+
+      {products.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -134,20 +218,12 @@ export default function SellerProductsClient({ products = [] }) {
           </h2>
 
           <p className="mt-2 text-sm text-slate-500">
-            Add your first product or try another search keyword.
+            Try another keyword, category, or sorting option.
           </p>
-
-          <Link
-            href="/dashboard/seller/products/new"
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4" />
-            Add Product
-          </Link>
         </motion.div>
       ) : (
         <div className="space-y-4">
-          {filteredProducts.map((product, index) => (
+          {products.map((product, index) => (
             <motion.article
               key={product._id}
               initial={{ opacity: 0, y: 22 }}

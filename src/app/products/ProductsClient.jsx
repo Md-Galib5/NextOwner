@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ShoppingBag,
@@ -15,48 +16,58 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-export default function ProductsClient({ products = [] }) {
-  const [searchText, setSearchText] = useState("");
-  const [category, setCategory] = useState("all");
-  const [sortBy, setSortBy] = useState("latest");
+const categories = [
+  "all",
+  "Electronics",
+  "Mobile Phones",
+  "Computers",
+  "Fashion",
+  "Furniture",
+  "Home Appliances",
+  "Sports",
+  "Books",
+  "Vehicles",
+  "Others",
+];
 
-  const categories = useMemo(() => {
-    return ["all", ...new Set(products.map((p) => p.category).filter(Boolean))];
-  }, [products]);
+export default function ProductsClient({
+  products = [],
+  filters = {
+    search: "",
+    category: "all",
+    sort: "latest",
+  },
+}) {
+  const router = useRouter();
+  const [searchText, setSearchText] = useState(filters.search || "");
 
-  const filteredProducts = useMemo(() => {
-    let result = [...products];
+  const updateFilter = (key, value) => {
+    const params = new URLSearchParams();
 
-    if (searchText.trim()) {
-      const text = searchText.toLowerCase();
+    const nextSearch = key === "search" ? value : filters.search;
+    const nextCategory = key === "category" ? value : filters.category;
+    const nextSort = key === "sort" ? value : filters.sort;
 
-      result = result.filter(
-        (product) =>
-          product.title?.toLowerCase().includes(text) ||
-          product.description?.toLowerCase().includes(text) ||
-          product.category?.toLowerCase().includes(text) ||
-          product.sellerInfo?.name?.toLowerCase().includes(text)
-      );
+    if (nextSearch) params.set("search", nextSearch);
+    if (nextCategory && nextCategory !== "all") {
+      params.set("category", nextCategory);
+    }
+    if (nextSort && nextSort !== "latest") {
+      params.set("sort", nextSort);
     }
 
-    if (category !== "all") {
-      result = result.filter((product) => product.category === category);
-    }
+    router.push(`/products?${params.toString()}`);
+  };
 
-    if (sortBy === "price-low") {
-      result.sort((a, b) => Number(a.price) - Number(b.price));
-    }
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    updateFilter("search", searchText.trim());
+  };
 
-    if (sortBy === "price-high") {
-      result.sort((a, b) => Number(b.price) - Number(a.price));
-    }
-
-    if (sortBy === "latest") {
-      result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    }
-
-    return result;
-  }, [products, searchText, category, sortBy]);
+  const clearFilters = () => {
+    setSearchText("");
+    router.push("/products");
+  };
 
   return (
     <section className="mx-auto mt-5 max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
@@ -81,9 +92,13 @@ export default function ProductsClient({ products = [] }) {
       </div>
 
       <div className="rounded-[1.7rem] border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid gap-3 lg:grid-cols-[1fr_220px_220px]">
+        <form
+          onSubmit={handleSearchSubmit}
+          className="grid gap-3 lg:grid-cols-[1fr_220px_220px_120px]"
+        >
           <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4">
             <Search className="h-4 w-4 text-slate-400" />
+
             <input
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
@@ -94,9 +109,10 @@ export default function ProductsClient({ products = [] }) {
 
           <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4">
             <SlidersHorizontal className="h-4 w-4 text-slate-400" />
+
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={filters.category}
+              onChange={(e) => updateFilter("category", e.target.value)}
               className="w-full bg-transparent text-sm font-bold text-slate-700 outline-none"
             >
               {categories.map((item) => (
@@ -109,9 +125,10 @@ export default function ProductsClient({ products = [] }) {
 
           <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4">
             <DollarSign className="h-4 w-4 text-slate-400" />
+
             <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              value={filters.sort}
+              onChange={(e) => updateFilter("sort", e.target.value)}
               className="w-full bg-transparent text-sm font-bold text-slate-700 outline-none"
             >
               <option value="latest">Latest First</option>
@@ -119,26 +136,45 @@ export default function ProductsClient({ products = [] }) {
               <option value="price-high">Price: High to Low</option>
             </select>
           </div>
-        </div>
 
-        <p className="mt-3 text-sm font-semibold text-slate-500">
-          Showing {filteredProducts.length} of {products.length} products
-        </p>
+          <button
+            type="submit"
+            className="h-12 rounded-2xl bg-cyan-600 px-4 text-sm font-bold text-white transition hover:bg-cyan-700"
+          >
+            Search
+          </button>
+        </form>
+
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-slate-500">
+            Showing {products.length} products
+          </p>
+
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="text-left text-sm font-bold text-slate-500 transition hover:text-cyan-600 sm:text-right"
+          >
+            Clear filters
+          </button>
+        </div>
       </div>
 
-      {filteredProducts.length === 0 ? (
+      {products.length === 0 ? (
         <div className="rounded-[2rem] border border-dashed border-slate-300 bg-white p-10 text-center">
           <ShoppingBag className="mx-auto h-12 w-12 text-slate-400" />
+
           <h2 className="mt-4 text-xl font-black text-slate-950">
             No products found
           </h2>
+
           <p className="mt-2 text-sm text-slate-500">
-            Try another search keyword or category.
+            Try another search keyword, category, or sorting option.
           </p>
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredProducts.map((product) => (
+          {products.map((product) => (
             <article
               key={product._id}
               className="group overflow-hidden rounded-[1.8rem] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-cyan-200 hover:shadow-xl"

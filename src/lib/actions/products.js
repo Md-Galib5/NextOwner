@@ -79,13 +79,30 @@ export const deleteProduct = async (id) => {
   }
 };
 
-export const getSellerProducts = async (email) => {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/products/seller/${email}`,
-    {
-      cache: "no-store",
-    }
-  );
+export const getSellerProducts = async ({
+  email,
+  search = "",
+  category = "all",
+  sort = "latest",
+}) => {
+  try {
+    const params = new URLSearchParams({
+      search,
+      category,
+      sort,
+    });
 
-  return res.json();
+    const res = await fetch(
+      `${baseUrl}/api/products/seller/${email}?${params.toString()}`,
+      {
+        cache: "no-store",
+      }
+    );
+
+    return await res.json();
+  } catch (error) {
+    console.error("Get Seller Products Error:", error);
+
+    return [];
+  }
 };
