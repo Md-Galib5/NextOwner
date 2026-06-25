@@ -8,8 +8,8 @@ const SellerProducts = async () => {
     headers: await headers(),
   });
 
-  const userId = session?.user?.id;
-  const products = await getSellerProducts(userId);
+  const email = session?.user?.email;
+  const products = email ? await getSellerProducts(email) : [];
 
   return <SellerProductsClient products={products} />;
 };

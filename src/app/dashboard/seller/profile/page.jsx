@@ -1,17 +1,17 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { getUserById } from "@/lib/api/user";
-import SellerProfileForm from "./SellerProfileForm";
+import { getSellerProducts } from "@/lib/api/products";
+import SellerProductsClient from "./SellerProductsClient";
 
-const SellerProfilePage = async () => {
+const SellerProducts = async () => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  const userId = session?.user?.id;
-  const user = await getUserById(userId);
+  const email = session?.user?.email;
+  const products = email ? await getSellerProducts(email) : [];
 
-  return <SellerProfileForm user={user} />;
+  return <SellerProductsClient products={products} />;
 };
 
-export default SellerProfilePage;
+export default SellerProducts;

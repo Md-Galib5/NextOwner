@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@heroui/react";
+import { usePathname } from "next/navigation";
 import {
   LogIn,
   UserPlus,
@@ -17,11 +18,15 @@ import LOGO from "../../public/logo.png";
 import { useSession, signOut } from "@/lib/auth-client";
 
 export default function Navbar() {
+  const pathname = usePathname();
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserOpen, setIsUserOpen] = useState(false);
 
   const { data: session } = useSession();
   const user = session?.user;
+
+  const role = user?.role || "buyer";
 
   const navLinks = [
     { label: "Home", href: "/" },
@@ -30,6 +35,9 @@ export default function Navbar() {
     { label: "About Us", href: "/about" },
     { label: "Contact", href: "/contact" },
   ];
+
+  const isDashboard = pathname === `/dashboard/${role}`;
+  const isProfile = pathname === `/dashboard/${role}/profile`;
 
   const handleSignOut = async () => {
     await signOut();
@@ -53,16 +61,24 @@ export default function Navbar() {
 
         <div className="hidden items-center gap-6 lg:flex">
           <ul className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-white hover:text-slate-900 hover:shadow-sm"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+
+              return (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                      isActive
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
 
           <div className="h-6 w-px bg-slate-200" />
@@ -113,27 +129,35 @@ export default function Navbar() {
                       {user.email}
                     </p>
                     <span className="mt-2 inline-block rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-600">
-                      {user.role}
+                      {role}
                     </span>
                   </div>
 
                   <Link
-  href={`/dashboard/${user?.role || "buyer"}`}
-  onClick={() => setIsUserOpen(false)}
-  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
->
-  <LayoutDashboard className="h-4 w-4" />
-  Dashboard
-</Link>
+                    href={`/dashboard/${role}`}
+                    onClick={() => setIsUserOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition ${
+                      isDashboard
+                        ? "bg-blue-50 text-blue-600"
+                        : "text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </Link>
 
-<Link
-  href={`/dashboard/${user?.role}/profile`}
-  onClick={() => setIsUserOpen(false)}
-  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
->
-  <User className="h-4 w-4" />
-  Profile
-</Link>
+                  <Link
+                    href={`/dashboard/${role}/profile`}
+                    onClick={() => setIsUserOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition ${
+                      isProfile
+                        ? "bg-blue-50 text-blue-600"
+                        : "text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    <User className="h-4 w-4" />
+                    Profile
+                  </Link>
 
                   <button
                     onClick={handleSignOut}
@@ -160,16 +184,24 @@ export default function Navbar() {
       {isMenuOpen && (
         <div className="border-t border-slate-200 bg-white lg:hidden">
           <div className="space-y-4 px-4 py-6 sm:px-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="block rounded-2xl px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100 hover:text-blue-600"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`block rounded-2xl px-4 py-3 text-base font-medium transition ${
+                    isActive
+                      ? "bg-blue-600 text-white"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-blue-600"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
 
             <div className="grid gap-3 border-t border-slate-200 pt-4">
               {!user ? (
@@ -201,22 +233,35 @@ export default function Navbar() {
                   <div className="rounded-xl bg-slate-50 px-4 py-3">
                     <p className="font-semibold text-slate-900">{user.name}</p>
                     <p className="text-sm text-slate-500">{user.email}</p>
+                    <span className="mt-2 inline-block rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-600">
+                      {role}
+                    </span>
                   </div>
 
                   <Button
-  as={Link}
-  href={`/dashboard/${user?.role || "buyer"}`}
-  variant="bordered"
-  onClick={() => setIsMenuOpen(false)}
->
-  Dashboard
-</Button>
+                    as={Link}
+                    href={`/dashboard/${role}`}
+                    variant={isDashboard ? "solid" : "bordered"}
+                    className={isDashboard ? "bg-blue-600 text-white" : ""}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Button>
 
-                  <Button as={Link} href="/profile" variant="bordered">
+                  <Button
+                    as={Link}
+                    href={`/dashboard/${role}/profile`}
+                    variant={isProfile ? "solid" : "bordered"}
+                    className={isProfile ? "bg-blue-600 text-white" : ""}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
                     Profile
                   </Button>
 
-                  <Button onClick={handleSignOut} className="bg-red-600 text-white">
+                  <Button
+                    onClick={handleSignOut}
+                    className="bg-red-600 text-white"
+                  >
                     Sign Out
                   </Button>
                 </>

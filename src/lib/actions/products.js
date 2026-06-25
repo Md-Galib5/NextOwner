@@ -78,3 +78,14 @@ export const deleteProduct = async (id) => {
     };
   }
 };
+
+export const getSellerProducts = async (email) => {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/products/seller/${email}`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  return res.json();
+};

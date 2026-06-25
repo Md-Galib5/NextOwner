@@ -1,19 +1,27 @@
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
-export const getSellerProducts = async (
-  userId,
-  status = "available"
-) => {
-  const res = await fetch(
-    `${baseUrl}/api/products?userId=${userId}&status=${status}`,
-    {
-      cache: "no-store",
-    }
-  );
+// export const getSellerProducts = async (
+//   userId,
+//   status = "available"
+// ) => {
+//   const res = await fetch(
+//     `${baseUrl}/api/products?userId=${userId}&status=${status}`,
+//     {
+//       cache: "no-store",
+//     }
+//   );
+
+//   return res.json();
+// };
+// const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+
+export const getSellerProducts = async (email) => {
+  const res = await fetch(`${baseUrl}/api/products/seller/${email}`, {
+    cache: "no-store",
+  });
 
   return res.json();
 };
-
 
 export const addproducts = async (newProductsData) => {
   try {
