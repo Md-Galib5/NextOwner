@@ -94,10 +94,13 @@ export default async function ProductsDetailsPage({ params }) {
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3">
-            <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-cyan-600">
-              <ShoppingCart className="h-4 w-4" />
-              Buy Now
-            </button>
+            <Link
+  href={`/checkout/${product._id}`}
+  className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-cyan-600"
+>
+  <ShoppingCart className="h-4 w-4" />
+  Buy Now
+</Link>
 
            <WishlistButton product={product} />
           </div>
