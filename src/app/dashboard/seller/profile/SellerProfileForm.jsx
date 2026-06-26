@@ -27,12 +27,12 @@ const SellerProfileForm = ({ user }) => {
 
     setLoading(true);
 
-    const res = await updateSellerProfile(user._id, {
-      phone,
-      location,
-      photo,
-      status: "active",
-    });
+    const res = await updateSellerProfile(user.email, {
+  phone,
+  location,
+  photo,
+  status: "active",
+});
 
     setLoading(false);
 

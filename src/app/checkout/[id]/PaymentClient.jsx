@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   BadgeCheck,
@@ -14,19 +14,43 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useSession } from "@/lib/auth-client";
+import { getUserByEmail } from "@/lib/api/user";
+import { createOrder } from "@/lib/api/orders";
 
 export default function PaymentClient({ product }) {
   const { data: session } = useSession();
 
-  const userName = session?.user?.name || "";
-  const userEmail = session?.user?.email || "";
-
+  const [dbUser, setDbUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
   const [loading, setLoading] = useState(false);
+
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
 
-  const handlePayment = (e) => {
+  useEffect(() => {
+    const loadUser = async () => {
+      if (!session?.user?.email) {
+        setLoadingUser(false);
+        return;
+      }
+
+     const user = await getUserByEmail(session.user.email);
+
+setDbUser(user);
+setPhone(user?.phone || "");
+setCity(user?.location || "");
+setAddress("");
+setLoadingUser(false);
+    };
+
+    loadUser();
+  }, [session?.user?.email]);
+
+  const userName = dbUser?.name || session?.user?.name || "";
+  const userEmail = dbUser?.email || session?.user?.email || "";
+
+  const handlePayment = async (e) => {
     e.preventDefault();
 
     if (!userName || !userEmail || !phone || !city || !address) {
@@ -34,13 +58,63 @@ export default function PaymentClient({ product }) {
       return;
     }
 
-    setLoading(true);
+    const orderData = {
+      buyerInfo: {
+        userId: dbUser?._id || session?.user?.id,
+        name: userName,
+        email: userEmail,
+        phone,
+        location: city,
+        deliveryAddress: address,
+      },
 
-    setTimeout(() => {
+      sellerInfo: {
+        userId: product?.sellerInfo?.userId,
+        name: product?.sellerInfo?.name,
+        email: product?.sellerInfo?.email,
+        phone: product?.sellerInfo?.phone,
+        location: product?.sellerInfo?.location,
+      },
+
+      productInfo: {
+        productId: product?._id,
+        title: product?.title,
+        image: product?.images?.[0],
+        price: product?.price,
+        category: product?.category,
+        condition: product?.condition,
+      },
+
+      paymentStatus: "pending",
+      orderStatus: "pending",
+    };
+
+    try {
+      setLoading(true);
+
+      const res = await createOrder(orderData);
+
+      if (res?.success) {
+        toast.success("Order placed successfully");
+        setAddress("");
+      } else {
+        toast.error(res?.message || "Failed to place order");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong");
+    } finally {
       setLoading(false);
-      toast.success("Payment system coming soon");
-    }, 1000);
+    }
   };
+
+  if (loadingUser) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <section className="min-h-screen bg-slate-50 px-4 py-8">
@@ -63,7 +137,7 @@ export default function PaymentClient({ product }) {
             </h1>
 
             <p className="mt-2 text-sm text-slate-500">
-              Your name and email are loaded from your account.
+              Your name, email, phone, and city are loaded from your profile.
             </p>
           </div>
 
@@ -81,7 +155,7 @@ export default function PaymentClient({ product }) {
 
             <Field
               icon={MapPin}
-              label="City"
+              label="City / Location"
               value={city}
               onChange={(e) => setCity(e.target.value)}
               placeholder="Dhaka"
@@ -97,7 +171,7 @@ export default function PaymentClient({ product }) {
                 rows={4}
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="House, road, area, city..."
+                placeholder="Write your full delivery address..."
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm outline-none transition focus:border-blue-500 focus:bg-white"
               />
             </div>
@@ -120,7 +194,7 @@ export default function PaymentClient({ product }) {
             className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 text-sm font-black text-white shadow-lg shadow-slate-300 transition hover:-translate-y-0.5 hover:bg-blue-600 disabled:opacity-60"
           >
             <CreditCard className="h-4 w-4" />
-            {loading ? "Processing..." : "Continue to Payment"}
+            {loading ? "Placing Order..." : "Continue to Payment"}
           </button>
         </motion.form>
 
