@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   BadgeCheck,
@@ -18,6 +19,7 @@ import { getUserByEmail } from "@/lib/api/user";
 import { createOrder } from "@/lib/api/orders";
 
 export default function PaymentClient({ product }) {
+  const router = useRouter();
   const { data: session } = useSession();
 
   const [dbUser, setDbUser] = useState(null);
@@ -35,13 +37,13 @@ export default function PaymentClient({ product }) {
         return;
       }
 
-     const user = await getUserByEmail(session.user.email);
+      const user = await getUserByEmail(session.user.email);
 
-setDbUser(user);
-setPhone(user?.phone || "");
-setCity(user?.location || "");
-setAddress("");
-setLoadingUser(false);
+      setDbUser(user);
+      setPhone(user?.phone || "");
+      setCity(user?.location || "");
+      setAddress("");
+      setLoadingUser(false);
     };
 
     loadUser();
@@ -50,8 +52,11 @@ setLoadingUser(false);
   const userName = dbUser?.name || session?.user?.name || "";
   const userEmail = dbUser?.email || session?.user?.email || "";
 
-  const handlePayment = async (e) => {
-    e.preventDefault();
+  const handlePayment = async () => {
+    toast.info("Checkout clicked", {
+      toastId: "checkout-clicked",
+      autoClose: 1000,
+    });
 
     if (!userName || !userEmail || !phone || !city || !address) {
       toast.error("Please fill in all checkout fields");
@@ -67,7 +72,6 @@ setLoadingUser(false);
         location: city,
         deliveryAddress: address,
       },
-
       sellerInfo: {
         userId: product?.sellerInfo?.userId,
         name: product?.sellerInfo?.name,
@@ -75,7 +79,6 @@ setLoadingUser(false);
         phone: product?.sellerInfo?.phone,
         location: product?.sellerInfo?.location,
       },
-
       productInfo: {
         productId: product?._id,
         title: product?.title,
@@ -84,7 +87,6 @@ setLoadingUser(false);
         category: product?.category,
         condition: product?.condition,
       },
-
       paymentStatus: "pending",
       orderStatus: "pending",
     };
@@ -97,9 +99,15 @@ setLoadingUser(false);
       if (res?.success) {
         toast.success("Order placed successfully");
         setAddress("");
-      } else {
-        toast.error(res?.message || "Failed to place order");
+
+        setTimeout(() => {
+          router.push("/dashboard/buyer/orders");
+        }, 1200);
+
+        return;
       }
+
+      toast.error(res?.message || "Failed to place order");
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong");
@@ -119,8 +127,7 @@ setLoadingUser(false);
   return (
     <section className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_420px]">
-        <motion.form
-          onSubmit={handlePayment}
+        <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
@@ -167,7 +174,6 @@ setLoadingUser(false);
               </label>
 
               <textarea
-                required
                 rows={4}
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
@@ -190,13 +196,15 @@ setLoadingUser(false);
           </div>
 
           <button
+            type="button"
+            onClick={handlePayment}
             disabled={loading}
-            className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 text-sm font-black text-white shadow-lg shadow-slate-300 transition hover:-translate-y-0.5 hover:bg-blue-600 disabled:opacity-60"
+            className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 text-sm font-black text-white shadow-lg shadow-slate-300 transition hover:-translate-y-0.5 hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <CreditCard className="h-4 w-4" />
             {loading ? "Placing Order..." : "Continue to Payment"}
           </button>
-        </motion.form>
+        </motion.div>
 
         <motion.aside
           initial={{ opacity: 0, x: 28 }}
@@ -276,7 +284,6 @@ function Field({ icon: Icon, label, placeholder, value, onChange }) {
         <Icon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
 
         <input
-          required
           value={value}
           onChange={onChange}
           placeholder={placeholder}
