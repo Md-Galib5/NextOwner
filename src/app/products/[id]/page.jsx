@@ -15,7 +15,6 @@ import {
   AlertCircle,
 } from "lucide-react";
 import WishlistButton from "@/components/products/WishlistButton";
-import BuyNowButton from "@/components/products/BuyNowButton";
 
 const getProductById = async (id) => {
   const res = await fetch(
@@ -105,15 +104,22 @@ export default async function ProductsDetailsPage({ params }) {
 
           <div className="mt-6 grid grid-cols-2 gap-3">
             {isBuyer ? (
-  <BuyNowButton product={product} />
-) : (
-  <div className="col-span-1 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">
-    <div className="flex items-center gap-2">
-      <AlertCircle className="h-4 w-4" />
-      Only buyers can buy products.
-    </div>
-  </div>
-)}
+              <Link
+                href={`/checkout/${product._id}`}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-cyan-600"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                Buy Now
+              </Link>
+            ) : (
+              <div className="col-span-1 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  Only buyers can buy products.
+                </div>
+              </div>
+            )}
+
             <WishlistButton product={product} />
           </div>
         </div>

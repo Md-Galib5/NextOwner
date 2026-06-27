@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   BadgeCheck,
@@ -16,10 +15,9 @@ import {
 import { toast } from "react-toastify";
 import { useSession } from "@/lib/auth-client";
 import { getUserByEmail } from "@/lib/api/user";
-import { createOrder } from "@/lib/api/orders";
+// import { createOrder } from "@/lib/api/orders";
 
 export default function PaymentClient({ product }) {
-  const router = useRouter();
   const { data: session } = useSession();
 
   const [dbUser, setDbUser] = useState(null);
@@ -52,69 +50,68 @@ export default function PaymentClient({ product }) {
   const userName = dbUser?.name || session?.user?.name || "";
   const userEmail = dbUser?.email || session?.user?.email || "";
 
-  const handlePayment = async () => {
-    toast.info("Checkout clicked", {
-      toastId: "checkout-clicked",
-      autoClose: 1000,
+ const handlePayment = async () => {
+  if (!product?._id) {
+    toast.error("Product not found");
+    return;
+  }
+
+  if (!userName || !userEmail || !phone || !city || !address) {
+    toast.error("Please fill in all checkout fields");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const stripeRes = await fetch("/api/create-checkout-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        buyerInfo: {
+          userId: dbUser?._id || session?.user?.id,
+          name: userName,
+          email: userEmail,
+          phone,
+          location: city,
+          deliveryAddress: address,
+        },
+        sellerInfo: {
+          userId: product?.sellerInfo?.userId,
+          name: product?.sellerInfo?.name,
+          email: product?.sellerInfo?.email,
+          phone: product?.sellerInfo?.phone,
+          location: product?.sellerInfo?.location,
+        },
+        productInfo: {
+          productId: product?._id,
+          title: product?.title,
+          image: product?.images?.[0] || "",
+          price: product?.price,
+          category: product?.category,
+          condition: product?.condition,
+          description: product?.description || "",
+        },
+      }),
     });
 
-    if (!userName || !userEmail || !phone || !city || !address) {
-      toast.error("Please fill in all checkout fields");
+    const stripeData = await stripeRes.json();
+
+    if (!stripeRes.ok || !stripeData?.success || !stripeData?.url) {
+      toast.error(stripeData?.message || "Failed to start payment");
       return;
     }
 
-    const orderData = {
-      buyerInfo: {
-        userId: dbUser?._id || session?.user?.id,
-        name: userName,
-        email: userEmail,
-        phone,
-        location: city,
-        deliveryAddress: address,
-      },
-      sellerInfo: {
-        userId: product?.sellerInfo?.userId,
-        name: product?.sellerInfo?.name,
-        email: product?.sellerInfo?.email,
-        phone: product?.sellerInfo?.phone,
-        location: product?.sellerInfo?.location,
-      },
-      productInfo: {
-        productId: product?._id,
-        title: product?.title,
-        image: product?.images?.[0],
-        price: product?.price,
-        category: product?.category,
-        condition: product?.condition,
-      },
-      paymentStatus: "pending",
-      orderStatus: "pending",
-    };
-
-    try {
-      setLoading(true);
-
-      const res = await createOrder(orderData);
-
-      if (res?.success) {
-        toast.success("Order placed successfully");
-        setAddress("");
-
-        setTimeout(() => {
-          router.push("/dashboard/buyer/orders");
-        }, 1200);
-
-        return;
-      }
-
-      toast.error(res?.message || "Failed to place order");
-    } catch (error) {
-      console.error(error);
-      toast.error("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
+    window.location.href = stripeData.url;
+  } catch (error) {
+    console.error(error);
+    toast.error(error.message || "Something went wrong");
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (loadingUser) {
     return (
@@ -144,7 +141,7 @@ export default function PaymentClient({ product }) {
             </h1>
 
             <p className="mt-2 text-sm text-slate-500">
-              Your name, email, phone, and city are loaded from your profile.
+              Fill in your delivery info, then continue to Stripe payment.
             </p>
           </div>
 
@@ -202,7 +199,7 @@ export default function PaymentClient({ product }) {
             className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 text-sm font-black text-white shadow-lg shadow-slate-300 transition hover:-translate-y-0.5 hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <CreditCard className="h-4 w-4" />
-            {loading ? "Placing Order..." : "Continue to Payment"}
+            {loading ? "Redirecting to Stripe..." : "Continue to Payment"}
           </button>
         </motion.div>
 
@@ -242,7 +239,7 @@ export default function PaymentClient({ product }) {
           </div>
 
           <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
               <BadgeCheck className="h-4 w-4" />
               Seller Information
             </div>

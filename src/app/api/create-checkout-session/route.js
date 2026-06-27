@@ -3,46 +3,36 @@ import { stripe } from "@/lib/stripe";
 
 export async function POST(req) {
   try {
-    const {
-      productId,
-      title,
-      price,
-      image,
-      buyerEmail,
-    } = await req.json();
+    const { buyerInfo, sellerInfo, productInfo } = await req.json();
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-
       mode: "payment",
-
-      customer_email: buyerEmail,
+      payment_method_types: ["card"],
+      customer_email: buyerInfo?.email || undefined,
 
       line_items: [
         {
           quantity: 1,
-
           price_data: {
-           currency: "huf",
-
-            unit_amount: Number(price) * 100,
-
+            currency: "huf",
+            unit_amount: Math.round(Number(productInfo?.price) * 100),
             product_data: {
-              name: title,
-              images: image ? [image] : [],
+              name: productInfo?.title || "NextOwner Product",
+              description: productInfo?.description || "",
+              images: productInfo?.image ? [productInfo.image] : [],
             },
           },
         },
       ],
 
       metadata: {
-        productId,
-        buyerEmail,
+        buyerInfo: JSON.stringify(buyerInfo),
+        sellerInfo: JSON.stringify(sellerInfo),
+        productInfo: JSON.stringify(productInfo),
       },
 
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/cancel`,
+      success_url: `${process.env.BETTER_AUTH_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.BETTER_AUTH_URL}/payment/cancel`,
     });
 
     return NextResponse.json({
@@ -50,10 +40,12 @@ export async function POST(req) {
       url: session.url,
     });
   } catch (error) {
+    console.error("Stripe checkout error:", error);
+
     return NextResponse.json(
       {
         success: false,
-        message: error.message,
+        message: error.message || "Failed to create checkout session",
       },
       { status: 500 }
     );
