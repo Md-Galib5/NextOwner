@@ -14,7 +14,7 @@ export async function POST(req) {
         {
           quantity: 1,
           price_data: {
-            currency: "huf",
+            currency: "usd",
             unit_amount: Math.round(Number(productInfo?.price) * 100),
             product_data: {
               name: productInfo?.title || "NextOwner Product",
