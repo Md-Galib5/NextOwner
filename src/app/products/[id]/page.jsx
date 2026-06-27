@@ -1,18 +1,21 @@
 import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import {
   ArrowLeft,
   BadgeCheck,
   Boxes,
   DollarSign,
-  Heart,
   MapPin,
   Phone,
   ShieldCheck,
   ShoppingCart,
   User,
   Mail,
+  AlertCircle,
 } from "lucide-react";
 import WishlistButton from "@/components/products/WishlistButton";
+import BuyNowButton from "@/components/products/BuyNowButton";
 
 const getProductById = async (id) => {
   const res = await fetch(
@@ -26,6 +29,13 @@ const getProductById = async (id) => {
 export default async function ProductsDetailsPage({ params }) {
   const { id } = await params;
   const product = await getProductById(id);
+
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  const role = session?.user?.role;
+  const isBuyer = role === "buyer";
 
   return (
     <section className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -94,15 +104,17 @@ export default async function ProductsDetailsPage({ params }) {
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3">
-            <Link
-  href={`/checkout/${product._id}`}
-  className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-cyan-600"
->
-  <ShoppingCart className="h-4 w-4" />
-  Buy Now
-</Link>
-
-           <WishlistButton product={product} />
+            {isBuyer ? (
+  <BuyNowButton product={product} />
+) : (
+  <div className="col-span-1 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">
+    <div className="flex items-center gap-2">
+      <AlertCircle className="h-4 w-4" />
+      Only buyers can buy products.
+    </div>
+  </div>
+)}
+            <WishlistButton product={product} />
           </div>
         </div>
       </div>
@@ -114,39 +126,28 @@ export default async function ProductsDetailsPage({ params }) {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl bg-slate-50 p-4">
-            <User className="h-5 w-5 text-cyan-700" />
-            <p className="mt-2 text-xs font-bold text-slate-400">Name</p>
-            <p className="font-black text-slate-900">
-              {product?.sellerInfo?.name || "Unknown Seller"}
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-slate-50 p-4">
-            <Mail className="h-5 w-5 text-cyan-700" />
-            <p className="mt-2 text-xs font-bold text-slate-400">Email</p>
-            <p className="truncate font-black text-slate-900">
-              {product?.sellerInfo?.email || "Not available"}
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-slate-50 p-4">
-            <Phone className="h-5 w-5 text-cyan-700" />
-            <p className="mt-2 text-xs font-bold text-slate-400">Phone</p>
-            <p className="font-black text-slate-900">
-              {product?.sellerInfo?.phone || "Not available"}
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-slate-50 p-4">
-            <MapPin className="h-5 w-5 text-cyan-700" />
-            <p className="mt-2 text-xs font-bold text-slate-400">Location</p>
-            <p className="font-black text-slate-900">
-              {product?.sellerInfo?.location || "Not available"}
-            </p>
-          </div>
+          <InfoCard icon={User} label="Name" value={product?.sellerInfo?.name} />
+          <InfoCard icon={Mail} label="Email" value={product?.sellerInfo?.email} />
+          <InfoCard icon={Phone} label="Phone" value={product?.sellerInfo?.phone} />
+          <InfoCard
+            icon={MapPin}
+            label="Location"
+            value={product?.sellerInfo?.location}
+          />
         </div>
       </div>
     </section>
+  );
+}
+
+function InfoCard({ icon: Icon, label, value }) {
+  return (
+    <div className="rounded-2xl bg-slate-50 p-4">
+      <Icon className="h-5 w-5 text-cyan-700" />
+      <p className="mt-2 text-xs font-bold text-slate-400">{label}</p>
+      <p className="truncate font-black text-slate-900">
+        {value || "Not available"}
+      </p>
+    </div>
   );
 }
