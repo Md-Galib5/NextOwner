@@ -542,29 +542,27 @@ export default function BuyerOrdersClient({ orders = [], email }) {
                     </td>
 
                     <td className="px-5 py-4">
-                      <div className="flex justify-center gap-3">
-                        <button
-                          onClick={() => setSelectedOrder(order)}
-                          className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          View Details
-                        </button>
+                     <div className="flex justify-end gap-3">
+  <button
+    onClick={() => setSelectedOrder(order)}
+    className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"
+  >
+    <Eye className="h-3.5 w-3.5" />
+    View Details
+  </button>
 
-                        {!["shipped", "delivered", "cancelled"].includes(
-                          order?.orderStatus
-                        ) && (
-                          <button
-                            onClick={() => handleCancel(order._id)}
-                            disabled={cancelId === order._id}
-                            className="rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white hover:bg-red-600 disabled:opacity-60"
-                          >
-                            {cancelId === order._id
-                              ? "Cancelling..."
-                              : "Cancel"}
-                          </button>
-                        )}
-                      </div>
+  {!["shipped", "delivered", "cancelled"].includes(
+    order?.orderStatus
+  ) && (
+    <button
+      onClick={() => handleCancel(order._id)}
+      disabled={cancelId === order._id}
+      className="rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white hover:bg-red-600 disabled:opacity-60"
+    >
+      {cancelId === order._id ? "Cancelling..." : "Cancel"}
+    </button>
+  )}
+</div>
                     </td>
                   </tr>
                 ))
