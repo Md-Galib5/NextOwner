@@ -14,6 +14,8 @@ import {
   ShoppingCart,
   Search,
   SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import WishlistButton from "@/components/products/WishlistButton";
 
@@ -33,6 +35,7 @@ const categories = [
 
 export default function ProductsClient({
   products = [],
+  pagination = {},
   filters = {
     search: "",
     category: "all",
@@ -43,20 +46,53 @@ export default function ProductsClient({
   const { data: session, isPending } = useSession();
   const [searchText, setSearchText] = useState(filters.search || "");
 
-  const updateFilter = (key, value) => {
+  const currentPage = Number(pagination?.currentPage || 1);
+  const totalPages = Number(pagination?.totalPages || 1);
+  const totalProducts = Number(pagination?.totalProducts || products.length);
+
+  const buildQuery = (nextValues = {}) => {
     const params = new URLSearchParams();
 
-    const nextSearch = key === "search" ? value : filters.search;
-    const nextCategory = key === "category" ? value : filters.category;
-    const nextSort = key === "sort" ? value : filters.sort;
+    const search = nextValues.search ?? filters.search;
+    const category = nextValues.category ?? filters.category;
+    const sort = nextValues.sort ?? filters.sort;
+    const page = nextValues.page ?? currentPage;
 
-    if (nextSearch) params.set("search", nextSearch);
-    if (nextCategory && nextCategory !== "all") {
-      params.set("category", nextCategory);
+    if (search) params.set("search", search);
+
+    if (category && category !== "all") {
+      params.set("category", category);
     }
-    if (nextSort && nextSort !== "latest") params.set("sort", nextSort);
 
-    router.push(`/products?${params.toString()}`);
+    if (sort && sort !== "latest") {
+      params.set("sort", sort);
+    }
+
+    params.set("page", String(page));
+
+    return params.toString();
+  };
+
+  const updateFilter = (key, value) => {
+    const query = buildQuery({
+      [key]: value,
+      page: 1,
+    });
+
+    router.push(`/products?${query}`);
+  };
+
+  const changePage = (page) => {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+
+    const query = buildQuery({ page });
+
+    router.push(`/products?${query}`);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   const handleSearchSubmit = (e) => {
@@ -66,7 +102,7 @@ export default function ProductsClient({
 
   const clearFilters = () => {
     setSearchText("");
-    router.push("/products");
+    router.push("/products?page=1");
   };
 
   const handleBuyNow = (productId) => {
@@ -90,11 +126,11 @@ export default function ProductsClient({
     <section className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-indigo-100 blur-3xl" />
+          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-100 blur-3xl" />
           <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-slate-200/60 blur-3xl" />
 
           <div className="relative z-10">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-bold text-indigo-700">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700">
               <ShoppingBag className="h-4 w-4" />
               NextOwner Marketplace
             </div>
@@ -114,7 +150,7 @@ export default function ProductsClient({
             onSubmit={handleSearchSubmit}
             className="grid gap-3 lg:grid-cols-[1fr_220px_220px_120px]"
           >
-            <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-indigo-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-50">
+            <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-blue-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-50">
               <Search className="h-4 w-4 text-slate-400" />
 
               <input
@@ -125,7 +161,7 @@ export default function ProductsClient({
               />
             </div>
 
-            <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-indigo-300 focus-within:bg-white">
+            <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-blue-300 focus-within:bg-white">
               <SlidersHorizontal className="h-4 w-4 text-slate-400" />
 
               <select
@@ -141,7 +177,7 @@ export default function ProductsClient({
               </select>
             </div>
 
-            <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-indigo-300 focus-within:bg-white">
+            <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-blue-300 focus-within:bg-white">
               <DollarSign className="h-4 w-4 text-slate-400" />
 
               <select
@@ -157,7 +193,7 @@ export default function ProductsClient({
 
             <button
               type="submit"
-              className="h-12 rounded-2xl bg-slate-950 px-4 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-200"
+              className="h-12 rounded-2xl bg-blue-600 px-4 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-200"
             >
               Search
             </button>
@@ -169,13 +205,17 @@ export default function ProductsClient({
               <span className="font-black text-slate-950">
                 {products.length}
               </span>{" "}
+              of{" "}
+              <span className="font-black text-slate-950">
+                {totalProducts}
+              </span>{" "}
               products
             </p>
 
             <button
               type="button"
               onClick={clearFilters}
-              className="text-left text-sm font-bold text-slate-500 transition hover:text-indigo-600 sm:text-right"
+              className="text-left text-sm font-bold text-slate-500 transition hover:text-blue-600 sm:text-right"
             >
               Clear filters
             </button>
@@ -195,93 +235,140 @@ export default function ProductsClient({
             </p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {products.map((product) => (
-              <article
-                key={product._id}
-                className="group overflow-hidden rounded-[1.8rem] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-xl hover:shadow-slate-200"
-              >
-                <div className="relative h-56 overflow-hidden bg-slate-100">
-                  <img
-                    src={product.images?.[0] || "/placeholder-product.png"}
-                    alt={product.title}
-                    className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-                  />
+          <>
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {products.map((product) => (
+                <article
+                  key={product._id}
+                  className="group overflow-hidden rounded-[1.8rem] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-slate-200"
+                >
+                  <div className="relative h-56 overflow-hidden bg-slate-100">
+                    <img
+                      src={product.images?.[0] || "/placeholder-product.png"}
+                      alt={product.title}
+                      className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                    />
 
-                  <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
-                    <span className="rounded-full bg-white/95 px-3 py-1 text-xs font-black text-indigo-700 shadow-sm backdrop-blur">
-                      {product.category}
-                    </span>
+                    <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
+                      <span className="rounded-full bg-white/95 px-3 py-1 text-xs font-black text-blue-700 shadow-sm backdrop-blur">
+                        {product.category}
+                      </span>
 
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50/95 px-3 py-1 text-xs font-black text-emerald-700 shadow-sm">
-                      <BadgeCheck className="h-3.5 w-3.5" />
-                      {product.status || "available"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-5">
-                  <div className="min-h-[82px]">
-                    <h2 className="line-clamp-1 text-xl font-black text-slate-950">
-                      {product.title}
-                    </h2>
-
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
-                      {product.description}
-                    </p>
-                  </div>
-
-                  <div className="mt-5 grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-3">
-                      <div className="flex items-center gap-1.5 text-indigo-700">
-                        <DollarSign className="h-4 w-4" />
-                        <span className="text-xs font-bold">Price</span>
-                      </div>
-
-                      <p className="mt-1 text-lg font-black text-slate-950">
-                        ${product.price}
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                      <div className="flex items-center gap-1.5 text-slate-500">
-                        <Boxes className="h-4 w-4" />
-                        <span className="text-xs font-bold">Stock</span>
-                      </div>
-
-                      <p className="mt-1 text-lg font-black text-slate-950">
-                        {product.stock}
-                      </p>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/95 px-3 py-1 text-xs font-black text-blue-700 shadow-sm">
+                        <BadgeCheck className="h-3.5 w-3.5" />
+                        {product.status || "available"}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="mt-5 space-y-3">
-                    <Link
-                      href={`/products/${product._id}`}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-                    >
-                      <Eye className="h-4 w-4" />
-                      View Details
-                    </Link>
+                  <div className="p-5">
+                    <div className="min-h-[82px]">
+                      <h2 className="line-clamp-1 text-xl font-black text-slate-950">
+                        {product.title}
+                      </h2>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleBuyNow(product._id)}
-                        disabled={isPending}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-200 disabled:cursor-not-allowed disabled:opacity-60"
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
+                        {product.description}
+                      </p>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3">
+                        <div className="flex items-center gap-1.5 text-blue-700">
+                          <DollarSign className="h-4 w-4" />
+                          <span className="text-xs font-bold">Price</span>
+                        </div>
+
+                        <p className="mt-1 text-lg font-black text-slate-950">
+                          ${product.price}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                        <div className="flex items-center gap-1.5 text-slate-500">
+                          <Boxes className="h-4 w-4" />
+                          <span className="text-xs font-bold">Stock</span>
+                        </div>
+
+                        <p className="mt-1 text-lg font-black text-slate-950">
+                          {product.stock}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 space-y-3">
+                      <Link
+                        href={`/products/${product._id}`}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                       >
-                        <ShoppingCart className="h-4 w-4" />
-                        Buy Now
-                      </button>
+                        <Eye className="h-4 w-4" />
+                        View Details
+                      </Link>
 
-                      <WishlistButton product={product} />
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleBuyNow(product._id)}
+                          disabled={isPending}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-200 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <ShoppingCart className="h-4 w-4" />
+                          Buy Now
+                        </button>
+
+                        <WishlistButton product={product} />
+                      </div>
                     </div>
                   </div>
+                </article>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+                <button
+                  type="button"
+                  disabled={!pagination?.hasPrevPage}
+                  onClick={() => changePage(currentPage - 1)}
+                  className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </button>
+
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {Array.from({ length: totalPages }).map((_, index) => {
+                    const page = index + 1;
+
+                    return (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => changePage(page)}
+                        className={`h-11 w-11 rounded-xl text-sm font-black transition ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white shadow-lg shadow-blue-100"
+                            : "border border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-blue-600"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
                 </div>
-              </article>
-            ))}
-          </div>
+
+                <button
+                  type="button"
+                  disabled={!pagination?.hasNextPage}
+                  onClick={() => changePage(currentPage + 1)}
+                  className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>

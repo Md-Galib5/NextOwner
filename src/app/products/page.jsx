@@ -1,38 +1,47 @@
 import ProductsClient from "./ProductsClient";
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
-async function getProducts(params) {
-  try {
-    const search = params?.search || "";
-    const category = params?.category || "all";
-    const sort = params?.sort || "latest";
+async function getProducts(searchParams) {
+  const paramsData = await searchParams;
 
-    const res = await fetch(
-      `${baseUrl}/api/products?search=${search}&category=${category}&sort=${sort}`,
-      { cache: "no-store" }
-    );
+  const page = paramsData?.page || "1";
+  const search = paramsData?.search || "";
+  const category = paramsData?.category || "all";
+  const sort = paramsData?.sort || "latest";
 
-    const data = await res.json();
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", "6");
 
-    return Array.isArray(data?.products) ? data.products : [];
-  } catch (error) {
-    console.log("Failed to load products:", error);
-    return [];
-  }
+  if (search) params.set("search", search);
+  if (category !== "all") params.set("category", category);
+  if (sort !== "latest") params.set("sort", sort);
+
+  const res = await fetch(`${baseUrl}/api/products?${params.toString()}`, {
+    cache: "no-store",
+  });
+
+  const data = await res.json();
+
+  console.log("PRODUCT API:", `${baseUrl}/api/products?${params.toString()}`);
+  console.log("PRODUCT DATA:", data);
+
+  return data;
 }
 
-export default async function Allproducts({ searchParams }) {
-  const params = await searchParams;
-  const products = await getProducts(params);
+export default async function ProductsPage({ searchParams }) {
+  const paramsData = await searchParams;
+  const data = await getProducts(paramsData);
 
   return (
     <ProductsClient
-      products={products}
+      products={data?.products || []}
+      pagination={data?.pagination || {}}
       filters={{
-        search: params?.search || "",
-        category: params?.category || "all",
-        sort: params?.sort || "latest",
+        search: paramsData?.search || "",
+        category: paramsData?.category || "all",
+        sort: paramsData?.sort || "latest",
       }}
     />
   );
