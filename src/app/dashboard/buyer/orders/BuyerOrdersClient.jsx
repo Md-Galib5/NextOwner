@@ -45,168 +45,6 @@ function OrderBadge({ status }) {
   );
 }
 
-// function DetailRow({ icon: Icon, label, value }) {
-//   return (
-//     <div className="flex gap-3 border-b border-dashed border-slate-100 py-3 last:border-0">
-//       <div className="rounded-xl bg-blue-50 p-2">
-//         <Icon className="h-4 w-4 text-blue-600" />
-//       </div>
-
-//       <div>
-//         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-//           {label}
-//         </p>
-//         <p className="break-all text-sm font-semibold text-slate-800">
-//           {value || "N/A"}
-//         </p>
-//       </div>
-//     </div>
-//   );
-// }
-
-// function OrderModal({ order, onClose }) {
-//   return (
-//     <div
-//       onClick={(e) => e.target === e.currentTarget && onClose()}
-//       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-md"
-//     >
-//       <div className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-[2rem] bg-white shadow-2xl">
-//         <button
-//           onClick={onClose}
-//           className="absolute right-4 top-4 rounded-full bg-white/90 p-2 shadow"
-//         >
-//           <X className="h-4 w-4" />
-//         </button>
-
-//         <div className="rounded-t-[2rem] bg-gradient-to-br from-blue-600 to-blue-800 p-6 text-white">
-//           <div className="flex items-center gap-3">
-//             <div className="rounded-2xl bg-white/20 p-3">
-//               <ShoppingBag className="h-5 w-5" />
-//             </div>
-
-//             <div>
-//               <h2 className="text-xl font-black">Order Details</h2>
-//               <p className="text-sm text-white/70">
-//                 #{order?._id?.slice(-8).toUpperCase()}
-//               </p>
-//             </div>
-//           </div>
-
-//           <div className="mt-4 flex gap-2">
-//             <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold">
-//               Payment: {order?.paymentStatus || "pending"}
-//             </span>
-//             <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold">
-//               Order: {order?.orderStatus || "processing"}
-//             </span>
-//           </div>
-//         </div>
-
-//         <div className="p-6">
-//           <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-blue-600">
-//             Product Information
-//           </h3>
-
-//           <DetailRow
-//             icon={ShoppingBag}
-//             label="Product Name"
-//             value={order?.productInfo?.title}
-//           />
-
-//           <DetailRow
-//             icon={CreditCard}
-//             label="Price"
-//             value={`$${order?.productInfo?.price || 0}`}
-//           />
-
-//           <DetailRow
-//             icon={Hash}
-//             label="Product ID"
-//             value={order?.productInfo?.productId}
-//           />
-
-//           <h3 className="mb-2 mt-6 text-xs font-black uppercase tracking-widest text-blue-600">
-//             Payment Details
-//           </h3>
-
-//           <DetailRow
-//             icon={Receipt}
-//             label="Transaction ID"
-//             value={order?.transactionId || order?.stripePaymentIntentId}
-//           />
-
-//           <DetailRow
-//             icon={Clock}
-//             label="Order Date"
-//             value={
-//               order?.createdAt
-//                 ? new Date(order.createdAt).toLocaleString()
-//                 : "N/A"
-//             }
-//           />
-
-//           <DetailRow
-//             icon={CheckCircle2}
-//             label="Payment Status"
-//             value={order?.paymentStatus}
-//           />
-
-//           <h3 className="mb-2 mt-6 text-xs font-black uppercase tracking-widest text-blue-600">
-//             Buyer Information
-//           </h3>
-
-//           <DetailRow
-//             icon={User}
-//             label="Buyer Name"
-//             value={order?.buyerInfo?.name}
-//           />
-
-//           <DetailRow
-//             icon={Receipt}
-//             label="Buyer Email"
-//             value={order?.buyerInfo?.email}
-//           />
-
-//           <DetailRow
-//             icon={Truck}
-//             label="Delivery Address"
-//             value={order?.buyerInfo?.deliveryAddress || order?.buyerInfo?.location}
-//           />
-
-//           <h3 className="mb-2 mt-6 text-xs font-black uppercase tracking-widest text-blue-600">
-//             Seller Information
-//           </h3>
-
-//           <DetailRow
-//             icon={Store}
-//             label="Seller Name"
-//             value={order?.sellerInfo?.name}
-//           />
-
-//           <DetailRow
-//             icon={Receipt}
-//             label="Seller Email"
-//             value={order?.sellerInfo?.email}
-//           />
-
-//           <DetailRow
-//             icon={CreditCard}
-//             label="Phone"
-//             value={order?.sellerInfo?.phone}
-//           />
-
-//           <button
-//             onClick={onClose}
-//             className="mt-6 w-full rounded-full bg-blue-600 py-3 text-sm font-bold text-white transition hover:bg-blue-700"
-//           >
-//             Close
-//           </button>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
 function DetailRow({ icon: Icon, label, value, highlight = false }) {
   return (
     <div className="group flex items-start gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-blue-100 hover:shadow-md">
@@ -521,8 +359,28 @@ export default function BuyerOrdersClient({ orders = [], email }) {
                       #{order?._id?.slice(-8).toUpperCase()}
                     </td>
 
-                    <td className="px-5 py-4 font-bold text-slate-900">
-                      {order?.productInfo?.title || "Unknown Product"}
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={
+                            order?.productInfo?.image ||
+                            order?.productInfo?.images?.[0] ||
+                            "/placeholder-product.png"
+                          }
+                          alt={order?.productInfo?.title || "Product"}
+                          className="h-14 w-14 rounded-2xl border border-slate-200 object-cover shadow-sm"
+                        />
+
+                        <div className="min-w-0">
+                          <p className="line-clamp-1 font-bold text-slate-900">
+                            {order?.productInfo?.title || "Unknown Product"}
+                          </p>
+
+                          <p className="mt-1 text-xs text-slate-400">
+                            {order?.productInfo?.category || "Product"}
+                          </p>
+                        </div>
+                      </div>
                     </td>
 
                     <td className="px-5 py-4 text-sm text-slate-600">
@@ -542,27 +400,27 @@ export default function BuyerOrdersClient({ orders = [], email }) {
                     </td>
 
                     <td className="px-5 py-4">
-                     <div className="flex justify-end gap-3">
-  <button
-    onClick={() => setSelectedOrder(order)}
-    className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"
-  >
-    <Eye className="h-3.5 w-3.5" />
-    View Details
-  </button>
+                      <div className="flex justify-end gap-3">
+                        <button
+                          onClick={() => setSelectedOrder(order)}
+                          className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          View Details
+                        </button>
 
-  {!["shipped", "delivered", "cancelled"].includes(
-    order?.orderStatus
-  ) && (
-    <button
-      onClick={() => handleCancel(order._id)}
-      disabled={cancelId === order._id}
-      className="rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white hover:bg-red-600 disabled:opacity-60"
-    >
-      {cancelId === order._id ? "Cancelling..." : "Cancel"}
-    </button>
-  )}
-</div>
+                        {!["shipped", "delivered", "cancelled"].includes(
+                          order?.orderStatus
+                        ) && (
+                          <button
+                            onClick={() => handleCancel(order._id)}
+                            disabled={cancelId === order._id}
+                            className="rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white hover:bg-red-600 disabled:opacity-60"
+                          >
+                            {cancelId === order._id ? "Cancelling..." : "Cancel"}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

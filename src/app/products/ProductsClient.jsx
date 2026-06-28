@@ -1,21 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { toast } from "react-toastify";
-import { useSession } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 import {
   ShoppingBag,
-  BadgeCheck,
-  Boxes,
-  DollarSign,
-  Eye,
-  ShoppingCart,
   Search,
   SlidersHorizontal,
+  DollarSign,
+  Eye,
+  Boxes,
+  BadgeCheck,
   ChevronLeft,
   ChevronRight,
+  Heart,
 } from "lucide-react";
 import WishlistButton from "@/components/products/WishlistButton";
 
@@ -43,7 +41,6 @@ export default function ProductsClient({
   },
 }) {
   const router = useRouter();
-  const { data: session, isPending } = useSession();
   const [searchText, setSearchText] = useState(filters.search || "");
 
   const currentPage = Number(pagination?.currentPage || 1);
@@ -59,40 +56,15 @@ export default function ProductsClient({
     const page = nextValues.page ?? currentPage;
 
     if (search) params.set("search", search);
-
-    if (category && category !== "all") {
-      params.set("category", category);
-    }
-
-    if (sort && sort !== "latest") {
-      params.set("sort", sort);
-    }
+    if (category && category !== "all") params.set("category", category);
+    if (sort && sort !== "latest") params.set("sort", sort);
 
     params.set("page", String(page));
-
     return params.toString();
   };
 
   const updateFilter = (key, value) => {
-    const query = buildQuery({
-      [key]: value,
-      page: 1,
-    });
-
-    router.push(`/products?${query}`);
-  };
-
-  const changePage = (page) => {
-    if (page < 1 || page > totalPages || page === currentPage) return;
-
-    const query = buildQuery({ page });
-
-    router.push(`/products?${query}`);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    router.push(`/products?${buildQuery({ [key]: value, page: 1 })}`);
   };
 
   const handleSearchSubmit = (e) => {
@@ -105,43 +77,43 @@ export default function ProductsClient({
     router.push("/products?page=1");
   };
 
-  const handleBuyNow = (productId) => {
-    if (isPending) return;
-
-    if (!session?.user?.email) {
-      toast.error("Please login first");
-      router.push(`/auth/signin?redirect=/products`);
-      return;
-    }
-
-    if (session?.user?.role !== "buyer") {
-      toast.error("Only buyers can buy products");
-      return;
-    }
-
-    router.push(`/checkout/${productId}`);
+  const changePage = (page) => {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    router.push(`/products?${buildQuery({ page })}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
     <section className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-100 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-slate-200/60 blur-3xl" />
+          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-blue-100 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-slate-200/70 blur-3xl" />
 
-          <div className="relative z-10">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700">
-              <ShoppingBag className="h-4 w-4" />
-              NextOwner Marketplace
+          <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700">
+                <ShoppingBag className="h-4 w-4" />
+                Verified Marketplace
+              </div>
+
+              <h1 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+                Explore Products
+              </h1>
+
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                Discover approved second-hand products from trusted sellers.
+              </p>
             </div>
 
-            <h1 className="text-3xl font-black tracking-tight text-slate-950">
-              Explore All Products
-            </h1>
-
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              Browse trusted pre-owned products listed by verified sellers.
-            </p>
+            <div className="rounded-2xl border border-slate-200 bg-white/80 px-5 py-4 shadow-sm backdrop-blur">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                Total Listings
+              </p>
+              <p className="mt-1 text-2xl font-black text-slate-950">
+                {totalProducts}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -156,12 +128,12 @@ export default function ProductsClient({
               <input
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Search by title, category, seller..."
+                placeholder="Search products..."
                 className="w-full bg-transparent text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400"
               />
             </div>
 
-            <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-blue-300 focus-within:bg-white">
+            <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4">
               <SlidersHorizontal className="h-4 w-4 text-slate-400" />
 
               <select
@@ -177,7 +149,7 @@ export default function ProductsClient({
               </select>
             </div>
 
-            <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-blue-300 focus-within:bg-white">
+            <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4">
               <DollarSign className="h-4 w-4 text-slate-400" />
 
               <select
@@ -223,15 +195,15 @@ export default function ProductsClient({
         </div>
 
         {products.length === 0 ? (
-          <div className="rounded-[2rem] border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
+          <div className="rounded-[2rem] border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm">
             <ShoppingBag className="mx-auto h-12 w-12 text-slate-400" />
 
             <h2 className="mt-4 text-xl font-black text-slate-950">
-              No products found
+              No approved products found
             </h2>
 
             <p className="mt-2 text-sm text-slate-500">
-              Try another search keyword, category, or sorting option.
+              Try changing your search, category, or sorting option.
             </p>
           </div>
         ) : (
@@ -256,7 +228,7 @@ export default function ProductsClient({
 
                       <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/95 px-3 py-1 text-xs font-black text-blue-700 shadow-sm">
                         <BadgeCheck className="h-3.5 w-3.5" />
-                        {product.status || "available"}
+                        Approved
                       </span>
                     </div>
                   </div>
@@ -296,28 +268,16 @@ export default function ProductsClient({
                       </div>
                     </div>
 
-                    <div className="mt-5 space-y-3">
+                    <div className="mt-5 grid grid-cols-[1fr_auto] gap-3">
                       <Link
                         href={`/products/${product._id}`}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-200"
                       >
                         <Eye className="h-4 w-4" />
-                        View Details
+                        View Product
                       </Link>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          onClick={() => handleBuyNow(product._id)}
-                          disabled={isPending}
-                          className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-200 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          <ShoppingCart className="h-4 w-4" />
-                          Buy Now
-                        </button>
-
-                        <WishlistButton product={product} />
-                      </div>
+                      <WishlistButton product={product} />
                     </div>
                   </div>
                 </article>
