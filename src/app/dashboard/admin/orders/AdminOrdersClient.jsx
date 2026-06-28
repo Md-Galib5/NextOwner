@@ -35,12 +35,12 @@ export default function AdminOrdersClient({ initialOrders = [] }) {
 
     if (!confirmUpdate) return;
 
-    setLoadingId(id);
-
     try {
+      setLoadingId(id);
+
       const res = await updateAdminOrderStatus(id, newStatus);
 
-      if (res?.success) {
+      if (res?.success || res?.modifiedCount > 0) {
         toast.success("Order status updated");
 
         setOrders((prev) =>
@@ -66,7 +66,7 @@ export default function AdminOrdersClient({ initialOrders = [] }) {
 
   const statusStyle = {
     pending: "bg-amber-50 text-amber-700 border-amber-100",
-    accepted: "bg-blue-50 text-blue-700 border-blue-100",
+    processing: "bg-blue-50 text-blue-700 border-blue-100",
     delivered: "bg-emerald-50 text-emerald-700 border-emerald-100",
     rejected: "bg-red-50 text-red-700 border-red-100",
     cancelled: "bg-red-50 text-red-700 border-red-100",
@@ -74,7 +74,7 @@ export default function AdminOrdersClient({ initialOrders = [] }) {
 
   const statusLabel = {
     pending: "Pending",
-    accepted: "Processing",
+    processing: "Processing",
     delivered: "Delivered",
     rejected: "Rejected",
     cancelled: "Cancelled",
@@ -116,7 +116,7 @@ export default function AdminOrdersClient({ initialOrders = [] }) {
         >
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
-          <option value="accepted">Processing</option>
+          <option value="processing">Processing</option>
           <option value="delivered">Delivered</option>
           <option value="rejected">Rejected</option>
           <option value="cancelled">Cancelled</option>
@@ -145,13 +145,13 @@ export default function AdminOrdersClient({ initialOrders = [] }) {
           <table className="w-full min-w-[1100px] text-left">
             <thead className="bg-slate-50 text-sm text-slate-500">
               <tr>
-                <th className="px-5 py-4">Product</th>
-                <th className="px-5 py-4">Buyer</th>
-                <th className="px-5 py-4">Seller</th>
-                <th className="px-5 py-4">Total</th>
-                <th className="px-5 py-4">Status</th>
-                <th className="px-5 py-4">Date</th>
-                <th className="px-5 py-4 text-right">Update</th>
+                <th className="px-5 py-4 w-[320px]">Product</th>
+                <th className="px-5 py-4 w-[220px]">Buyer</th>
+                <th className="px-5 py-4 w-[220px]">Seller</th>
+                <th className="px-5 py-4 w-[120px]">Total</th>
+                <th className="px-5 py-4 w-[140px]">Status</th>
+                <th className="px-5 py-4 w-[140px]">Date</th>
+                <th className="px-5 py-4 w-[220px] text-right">Update</th>
               </tr>
             </thead>
 
@@ -160,7 +160,6 @@ export default function AdminOrdersClient({ initialOrders = [] }) {
                 const product = order.productInfo || {};
                 const buyer = order.buyerInfo || {};
                 const seller = order.sellerInfo || {};
-
                 const currentStatus = order.orderStatus || "pending";
 
                 const totalPrice =
@@ -183,42 +182,42 @@ export default function AdminOrdersClient({ initialOrders = [] }) {
                 return (
                   <tr key={order._id} className="hover:bg-slate-50">
                     <td className="px-5 py-4 w-[320px]">
-  <div className="flex items-start gap-3 min-w-0">
-    <img
-      src={image}
-      alt={product.title || "Product"}
-      className="h-14 w-14 flex-shrink-0 rounded-2xl border border-slate-200 object-cover"
-    />
+                      <div className="flex min-w-0 items-start gap-3">
+                        <img
+                          src={image}
+                          alt={product.title || "Product"}
+                          className="h-14 w-14 flex-shrink-0 rounded-2xl border border-slate-200 object-cover"
+                        />
 
-    <div className="min-w-0 flex-1">
-      <p
-        title={product.title}
-        className="font-bold text-slate-900 break-words line-clamp-2"
-      >
-        {product.title || "Unknown Product"}
-      </p>
+                        <div className="min-w-0 flex-1">
+                          <p
+                            title={product.title}
+                            className="line-clamp-2 break-words font-bold text-slate-900"
+                          >
+                            {product.title || "Unknown Product"}
+                          </p>
 
-      <p className="mt-1 text-xs text-slate-500">
-        Qty: {order.quantity || 1}
-      </p>
-    </div>
-  </div>
-</td>
+                          <p className="mt-1 text-xs text-slate-500">
+                            Qty: {order.quantity || 1}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
 
-                    <td className="px-5 py-4">
-                      <p className="font-semibold text-slate-800">
+                    <td className="px-5 py-4 w-[220px]">
+                      <p className="truncate font-semibold text-slate-800">
                         {buyer.name || "Unknown Buyer"}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="truncate text-xs text-slate-500">
                         {buyer.email || "No email"}
                       </p>
                     </td>
 
-                    <td className="px-5 py-4">
-                      <p className="font-semibold text-slate-800">
+                    <td className="px-5 py-4 w-[220px]">
+                      <p className="truncate font-semibold text-slate-800">
                         {seller.name || "Unknown Seller"}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="truncate text-xs text-slate-500">
                         {seller.email || "No email"}
                       </p>
                     </td>
@@ -258,7 +257,7 @@ export default function AdminOrdersClient({ initialOrders = [] }) {
                           className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none focus:border-blue-500 disabled:opacity-50"
                         >
                           <option value="pending">Pending</option>
-                          <option value="accepted">Processing</option>
+                          <option value="processing">Processing</option>
                           <option value="delivered">Delivered</option>
                           <option value="rejected">Rejected</option>
                           <option value="cancelled">Cancelled</option>

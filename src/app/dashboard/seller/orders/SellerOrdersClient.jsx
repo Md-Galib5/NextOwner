@@ -1,9 +1,10 @@
+// src/app/dashboard/seller/orders/SellerOrdersClient.jsx
+
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-
+import { motion, AnimatePresence } from "framer-motion";
 import {
   PackageCheck,
   ShoppingBag,
@@ -18,16 +19,17 @@ import {
   CreditCard,
   CalendarDays,
   X,
+  AlertTriangle,
 } from "lucide-react";
 import { updateOrderStatus } from "@/lib/api/orders";
 import { toast } from "react-toastify";
 
 const statusStyle = {
-  processing: "bg-amber-50 text-amber-700 ring-amber-200",
   pending: "bg-orange-50 text-orange-700 ring-orange-200",
-  shipped: "bg-blue-50 text-blue-700 ring-blue-200",
+  processing: "bg-blue-50 text-blue-700 ring-blue-200",
   delivered: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   cancelled: "bg-red-50 text-red-700 ring-red-200",
+  rejected: "bg-red-50 text-red-700 ring-red-200",
 };
 
 function Badge({ children, className = "" }) {
@@ -40,30 +42,51 @@ function Badge({ children, className = "" }) {
   );
 }
 
+function SmallButton({ children, icon: Icon, className = "", ...props }) {
+  return (
+    <button
+      {...props}
+      className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-full px-3.5 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+    >
+      {Icon && <Icon className="h-3.5 w-3.5" />}
+      {children}
+    </button>
+  );
+}
+
 export default function SellerOrdersClient({ orders = [], res = {} }) {
-    console.log(orders)
   const router = useRouter();
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
   const [loadingId, setLoadingId] = useState(null);
 
   const totalOrders = res.totalOrders || orders.length;
+
   const processingOrders =
     res.processingOrders ||
     orders.filter((order) => order.orderStatus === "processing").length;
+
   const deliveredOrders =
     res.deliveredOrders ||
     orders.filter((order) => order.orderStatus === "delivered").length;
+
   const cancelledOrders = orders.filter(
     (order) => order.orderStatus === "cancelled"
   ).length;
 
-  const handleUpdateStatus = async (id, status) => {
+  const handleUpdateStatus = async () => {
+    if (!confirmModal) return;
+
+    const { id, orderStatus } = confirmModal;
+
     try {
       setLoadingId(id);
-      const result = await updateOrderStatus(id, status);
+
+      const result = await updateOrderStatus(id, orderStatus);
 
       if (result?.success || result?.modifiedCount > 0) {
-        toast.success(`Order marked as ${status}`);
+        toast.success(`Order marked as ${orderStatus}`);
+        setConfirmModal(null);
         router.refresh();
       } else {
         toast.error(result?.message || "Failed to update order");
@@ -77,6 +100,7 @@ export default function SellerOrdersClient({ orders = [], res = {} }) {
 
   return (
     <section className="space-y-8">
+      {/* HERO - SAME SIZE */}
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
@@ -88,9 +112,9 @@ export default function SellerOrdersClient({ orders = [], res = {} }) {
               <PackageCheck className="h-4 w-4" />
               Seller Order Center
             </div>
-            <h1 className="text-3xl font-black md:text-5xl">
-              Manage Orders
-            </h1>
+
+            <h1 className="text-3xl font-black md:text-5xl">Manage Orders</h1>
+
             <p className="mt-3 max-w-xl text-sm text-blue-50">
               Track buyer purchases, delivery progress, payments, and order
               actions from one clean dashboard.
@@ -105,28 +129,13 @@ export default function SellerOrdersClient({ orders = [], res = {} }) {
         </div>
       </motion.div>
 
+      {/* STATS - SAME SIZE */}
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          {
-            title: "Total Orders",
-            value: totalOrders,
-            icon: ShoppingBag,
-          },
-          {
-            title: "Processing",
-            value: processingOrders,
-            icon: Clock,
-          },
-          {
-            title: "Delivered",
-            value: deliveredOrders,
-            icon: CheckCircle2,
-          },
-          {
-            title: "Cancelled",
-            value: cancelledOrders,
-            icon: XCircle,
-          },
+          { title: "Total Orders", value: totalOrders, icon: ShoppingBag },
+          { title: "Processing", value: processingOrders, icon: Clock },
+          { title: "Delivered", value: deliveredOrders, icon: CheckCircle2 },
+          { title: "Cancelled", value: cancelledOrders, icon: XCircle },
         ].map((item, index) => (
           <motion.div
             key={item.title}
@@ -144,6 +153,7 @@ export default function SellerOrdersClient({ orders = [], res = {} }) {
                   {item.value}
                 </h3>
               </div>
+
               <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
                 <item.icon className="h-6 w-6" />
               </div>
@@ -163,175 +173,303 @@ export default function SellerOrdersClient({ orders = [], res = {} }) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-5">
-          {orders.map((order, index) => (
-            <motion.div
-              key={order._id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.04 }}
-              className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-            >
-              <div className="grid gap-5 lg:grid-cols-[90px_1.5fr_1fr_1fr_auto] lg:items-center">
-                <img
-                  src={order.productInfo?.image || "/placeholder.png"}
-                  alt={order.productInfo?.title || "Product"}
-                  className="h-20 w-20 rounded-2xl object-cover ring-1 ring-slate-200"
-                />
+        <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+          <div className="hidden grid-cols-[1.7fr_1fr_0.8fr_1.2fr] border-b border-slate-200 bg-slate-50 px-6 py-4 text-xs font-black uppercase tracking-wide text-slate-400 lg:grid">
+            <p>Product</p>
+            <p>Buyer</p>
+            <p>Amount</p>
+            <p className="text-right">Actions</p>
+          </div>
 
-                <div>
-                  <p className="font-mono text-xs font-bold text-blue-600">
-                    #{order._id?.slice(-8).toUpperCase()}
-                  </p>
-                  <h3 className="mt-1 text-lg font-black text-slate-900">
-                    {order.productInfo?.title || "Unknown Product"}
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {order.productInfo?.category || "N/A"} •{" "}
-                    {order.productInfo?.condition || "N/A"}
-                  </p>
-                </div>
+          <div className="divide-y divide-slate-100">
+            {orders.map((order, index) => {
+              const currentStatus = order.orderStatus || "pending";
 
-                <div>
-                  <p className="text-xs font-bold uppercase text-slate-400">
-                    Buyer
-                  </p>
-                  <p className="mt-1 font-bold text-slate-900">
-                    {order.buyerInfo?.name || "N/A"}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    {order.buyerInfo?.email || "N/A"}
-                  </p>
-                </div>
+              return (
+                <motion.div
+                  key={order._id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.04 }}
+                  className="grid gap-5 px-5 py-4 transition hover:bg-blue-50/40 lg:grid-cols-[1.7fr_1fr_0.8fr_1.2fr] lg:items-center lg:px-6"
+                >
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={order.productInfo?.image || "/placeholder.png"}
+                      alt={order.productInfo?.title || "Product"}
+                      className="h-16 w-16 rounded-2xl object-cover ring-1 ring-slate-200"
+                    />
 
-                <div>
-                  <p className="text-xs font-bold uppercase text-slate-400">
-                    Amount
-                  </p>
-                  <p className="mt-1 text-xl font-black text-slate-900">
-                    ${Number(order.productInfo?.price || 0).toLocaleString()}
-                  </p>
-                  <Badge className="mt-2 bg-emerald-50 text-emerald-700 ring-emerald-200">
-                    {order.paymentStatus || "pending"}
-                  </Badge>
-                </div>
+                    <div className="min-w-0">
+                      <p className="font-mono text-xs font-bold text-blue-600">
+                        #{order._id?.slice(-8).toUpperCase()}
+                      </p>
 
-                <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
-                  <Badge
-                    className={
-                      statusStyle[order.orderStatus] ||
-                      "bg-slate-50 text-slate-700 ring-slate-200"
-                    }
-                  >
-                    {order.orderStatus || "processing"}
-                  </Badge>
+                      <h3 className="mt-1 truncate text-lg font-black text-slate-900">
+                        {order.productInfo?.title || "Unknown Product"}
+                      </h3>
 
-                  <button
-                    onClick={() => setSelectedOrder(order)}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-                  >
-                    <Eye className="h-4 w-4" />
-                    View
-                  </button>
+                      <p className="mt-1 truncate text-sm text-slate-500">
+                        {order.productInfo?.category || "N/A"} •{" "}
+                        {order.productInfo?.condition || "N/A"}
+                      </p>
+                    </div>
+                  </div>
 
-                  {order.orderStatus === "processing" && (
-                    <button
-                      disabled={loadingId === order._id}
-                      onClick={() =>
-                        handleUpdateStatus(order._id, "delivered")
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-slate-900">
+                      {order.buyerInfo?.name || "N/A"}
+                    </p>
+                    <p className="truncate text-sm text-slate-500">
+                      {order.buyerInfo?.email || "N/A"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xl font-black text-slate-900">
+                      ${Number(order.productInfo?.price || 0).toLocaleString()}
+                    </p>
+                    <Badge className="mt-2 bg-emerald-50 text-emerald-700 ring-emerald-200">
+                      {order.paymentStatus || "pending"}
+                    </Badge>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-start gap-2 lg:justify-end">
+                    <Badge
+                      className={
+                        statusStyle[currentStatus] ||
+                        "bg-slate-50 text-slate-700 ring-slate-200"
                       }
-                      className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60"
                     >
-                      <Truck className="h-4 w-4" />
-                      Deliver
-                    </button>
-                  )}
+                      {currentStatus}
+                    </Badge>
 
-                  {!["delivered", "cancelled"].includes(order.orderStatus) && (
-                    <button
-                      disabled={loadingId === order._id}
-                      onClick={() =>
-                        handleUpdateStatus(order._id, "cancelled")
-                      }
-                      className="inline-flex items-center gap-2 rounded-full bg-red-50 px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-100 disabled:opacity-60"
+                    <SmallButton
+                      icon={Eye}
+                      onClick={() => setSelectedOrder(order)}
+                      className="border border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                     >
-                      <XCircle className="h-4 w-4" />
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
+                      View
+                    </SmallButton>
 
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] bg-white p-6 shadow-2xl">
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <div>
-                <p className="font-mono text-xs font-bold text-blue-600">
-                  #{selectedOrder._id?.slice(-8).toUpperCase()}
-                </p>
-                <h2 className="mt-1 text-2xl font-black text-slate-900">
-                  Order Details
-                </h2>
-              </div>
+                    {currentStatus === "pending" && (
+                      <SmallButton
+                        icon={Clock}
+                        disabled={loadingId === order._id}
+                        onClick={() =>
+                          setConfirmModal({
+                            id: order._id,
+                            orderStatus: "processing",
+                            title: "Move to processing?",
+                            message:
+                              "This order will be marked as processing and prepared for delivery.",
+                            buttonText: "Yes, Process",
+                            type: "blue",
+                          })
+                        }
+                        className="bg-blue-600 text-white hover:bg-blue-700"
+                      >
+                        Process
+                      </SmallButton>
+                    )}
 
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="rounded-full bg-slate-100 p-2 hover:bg-slate-200"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+                    {currentStatus === "processing" && (
+                      <SmallButton
+                        icon={Truck}
+                        disabled={loadingId === order._id}
+                        onClick={() =>
+                          setConfirmModal({
+                            id: order._id,
+                            orderStatus: "delivered",
+                            title: "Mark as delivered?",
+                            message:
+                              "This order will be completed and marked as delivered.",
+                            buttonText: "Yes, Done",
+                            type: "green",
+                          })
+                        }
+                        className="bg-emerald-600 text-white hover:bg-emerald-700"
+                      >
+                        Done
+                      </SmallButton>
+                    )}
 
-            <div className="space-y-5">
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <h3 className="font-black text-slate-900">
-                  {selectedOrder.productInfo?.title || "N/A"}
-                </h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  {selectedOrder.productInfo?.description || "No description"}
-                </p>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Info icon={User} label="Buyer" value={selectedOrder.buyerInfo?.name} />
-                <Info icon={Mail} label="Email" value={selectedOrder.buyerInfo?.email} />
-                <Info icon={MapPin} label="Delivery" value={selectedOrder.buyerInfo?.deliveryAddress} />
-                <Info icon={CreditCard} label="Payment" value={selectedOrder.paymentStatus} />
-                <Info
-                  icon={CalendarDays}
-                  label="Date"
-                  value={
-                    selectedOrder.createdAt
-                      ? new Date(selectedOrder.createdAt).toLocaleString()
-                      : "N/A"
-                  }
-                />
-                <Info
-                  icon={ShoppingBag}
-                  label="Price"
-                  value={`$${Number(
-                    selectedOrder.productInfo?.price || 0
-                  ).toLocaleString()}`}
-                />
-              </div>
-
-              <div>
-                <p className="text-xs font-bold uppercase text-slate-400">
-                  Transaction ID
-                </p>
-                <p className="mt-1 break-all rounded-xl bg-slate-50 p-3 text-sm font-medium text-slate-700">
-                  {selectedOrder.stripePaymentIntentId || "N/A"}
-                </p>
-              </div>
-            </div>
+                    {!["delivered", "cancelled", "rejected"].includes(
+                      currentStatus
+                    ) && (
+                      <SmallButton
+                        icon={XCircle}
+                        disabled={loadingId === order._id}
+                        onClick={() =>
+                          setConfirmModal({
+                            id: order._id,
+                            orderStatus: "cancelled",
+                            title: "Cancel this order?",
+                            message:
+                              "This action will cancel the order. You can review before confirming.",
+                            buttonText: "Yes, Cancel",
+                            type: "red",
+                          })
+                        }
+                        className="bg-red-50 text-red-600 hover:bg-red-100"
+                      >
+                        Cancel
+                      </SmallButton>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       )}
+
+      {/* DETAILS MODAL */}
+      <AnimatePresence>
+        {selectedOrder && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 18 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 18 }}
+              className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] bg-white p-6 shadow-2xl"
+            >
+              <div className="mb-6 flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-mono text-xs font-bold text-blue-600">
+                    #{selectedOrder._id?.slice(-8).toUpperCase()}
+                  </p>
+                  <h2 className="mt-1 text-2xl font-black text-slate-900">
+                    Order Details
+                  </h2>
+                </div>
+
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="rounded-full bg-slate-100 p-2 hover:bg-slate-200"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <h3 className="font-black text-slate-900">
+                    {selectedOrder.productInfo?.title || "N/A"}
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {selectedOrder.productInfo?.description || "No description"}
+                  </p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Info icon={User} label="Buyer" value={selectedOrder.buyerInfo?.name} />
+                  <Info icon={Mail} label="Email" value={selectedOrder.buyerInfo?.email} />
+                  <Info icon={MapPin} label="Delivery" value={selectedOrder.buyerInfo?.deliveryAddress} />
+                  <Info icon={CreditCard} label="Payment" value={selectedOrder.paymentStatus} />
+                  <Info
+                    icon={CalendarDays}
+                    label="Date"
+                    value={
+                      selectedOrder.createdAt
+                        ? new Date(selectedOrder.createdAt).toLocaleString()
+                        : "N/A"
+                    }
+                  />
+                  <Info
+                    icon={ShoppingBag}
+                    label="Price"
+                    value={`$${Number(
+                      selectedOrder.productInfo?.price || 0
+                    ).toLocaleString()}`}
+                  />
+                </div>
+
+                <div>
+                  <p className="text-xs font-bold uppercase text-slate-400">
+                    Transaction ID
+                  </p>
+                  <p className="mt-1 break-all rounded-xl bg-slate-50 p-3 text-sm font-medium text-slate-700">
+                    {selectedOrder.stripePaymentIntentId || "N/A"}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* CONFIRM MODAL */}
+      <AnimatePresence>
+        {confirmModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 18 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 18 }}
+              className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl"
+            >
+              <div className="mb-5 flex items-start gap-4">
+                <div
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
+                    confirmModal.type === "red"
+                      ? "bg-red-50 text-red-600"
+                      : confirmModal.type === "green"
+                      ? "bg-emerald-50 text-emerald-600"
+                      : "bg-blue-50 text-blue-600"
+                  }`}
+                >
+                  <AlertTriangle className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-black text-slate-900">
+                    {confirmModal.title}
+                  </h3>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                    {confirmModal.message}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setConfirmModal(null)}
+                  className="h-10 rounded-full border border-slate-200 px-5 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  No
+                </button>
+
+                <button
+                  disabled={loadingId === confirmModal.id}
+                  onClick={handleUpdateStatus}
+                  className={`h-10 rounded-full px-5 text-sm font-bold text-white disabled:opacity-60 ${
+                    confirmModal.type === "red"
+                      ? "bg-red-600 hover:bg-red-700"
+                      : confirmModal.type === "green"
+                      ? "bg-emerald-600 hover:bg-emerald-700"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+                >
+                  {loadingId === confirmModal.id
+                    ? "Updating..."
+                    : confirmModal.buttonText}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
