@@ -1,61 +1,50 @@
-// const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
-// export const createOrder = async (orderData) => {
-//   try {
-//     const res = await fetch(`${baseUrl}/api/orders`, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify(orderData),
-//       cache: "no-store",
-//     });
+const parseJson = async (res) => {
+  const text = await res.text();
 
-//     const data = await res.json();
+  console.log("STATUS:", res.status);
+  console.log("RAW API TEXT:", text);
 
-//     console.log("CREATE ORDER RESPONSE:", data);
-
-//     return data;
-//   } catch (error) {
-//     console.error("Create Order Error:", error);
-
-//     return {
-//       success: false,
-//       message: error.message,
-//     };
-//   }
-// };
-
-// export const getBuyerOrders = async (email) => {
-//   try {
-//     const res = await fetch(
-//       `${baseUrl}/api/orders/buyer/${encodeURIComponent(email)}`,
-//       {
-//         cache: "no-store",
-//       }
-//     );
-
-//     const data = await res.json();
-
-//     if (Array.isArray(data)) return data;
-//     if (Array.isArray(data?.orders)) return data.orders;
-
-//     return [];
-//   } catch (error) {
-//     console.error("Get Buyer Orders Error:", error);
-//     return [];
-//   }
-// };
-
-
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {
+      success: false,
+      orders: [],
+      message: text,
+    };
+  }
+};
 
 export async function getBuyerOrders(email) {
-  const res = await fetch(`${baseUrl}/api/orders/buyer/${email}`, {
-    cache: "no-store",
-  });
+  if (!email) return { success: false, orders: [] };
 
-  return res.json();
+  const res = await fetch(
+    `${baseUrl}/api/orders/buyer/${encodeURIComponent(email.trim().toLowerCase())}`,
+    { cache: "no-store" }
+  );
+
+  return parseJson(res);
+}
+
+export async function getSellerOrders(email) {
+  if (!email) return { success: false, orders: [] };
+
+  const cleanEmail = email.trim().toLowerCase();
+  const url = `${baseUrl}/api/orders/seller/${encodeURIComponent(cleanEmail)}`;
+
+  console.log("GET SELLER ORDERS URL:", url);
+
+  const res = await fetch(url, { cache: "no-store" });
+  const data = await parseJson(res);
+
+  console.log("GET SELLER ORDERS DATA:", data);
+
+  return {
+    success: data?.success ?? false,
+    orders: Array.isArray(data?.orders) ? data.orders : [],
+  };
 }
 
 export async function getOrderDetails(id) {
@@ -63,7 +52,7 @@ export async function getOrderDetails(id) {
     cache: "no-store",
   });
 
-  return res.json();
+  return parseJson(res);
 }
 
 export async function cancelOrder(id) {
@@ -72,5 +61,18 @@ export async function cancelOrder(id) {
     cache: "no-store",
   });
 
-  return res.json();
+  return parseJson(res);
+}
+
+export async function updateOrderStatus(id, status) {
+  const res = await fetch(`${baseUrl}/api/orders/${id}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+    body: JSON.stringify({ status }),
+  });
+
+  return parseJson(res);
 }
