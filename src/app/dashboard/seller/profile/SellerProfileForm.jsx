@@ -4,44 +4,91 @@ import { useState } from "react";
 import { updateSellerProfile } from "@/lib/api/user";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-import { Camera, MapPin, Phone, ShieldCheck, User } from "lucide-react";
+import { Camera, MapPin, Phone, ShieldCheck, User, Upload } from "lucide-react";
 
 const SellerProfileForm = ({ user }) => {
   const router = useRouter();
-  // console.log(user)
 
   const [phone, setPhone] = useState(user?.phone || "");
   const [location, setLocation] = useState(user?.location || "");
   const [photo, setPhoto] = useState(user?.photo || "");
+  const [imageFile, setImageFile] = useState(null);
+  const [preview, setPreview] = useState(user?.photo || "");
   const [loading, setLoading] = useState(false);
 
   const isCompleted = user?.sellerProfileCompleted;
 
+  const uploadImageToImgBB = async () => {
+    if (!imageFile) return photo;
+
+    const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
+
+    if (!apiKey) {
+      throw new Error("ImgBB API key is missing");
+    }
+
+    const formData = new FormData();
+    formData.append("image", imageFile);
+
+    const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!data?.success) {
+      throw new Error("Image upload failed");
+    }
+
+    return data.data.url;
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      return;
+    }
+
+    setImageFile(file);
+    setPreview(URL.createObjectURL(file));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!phone || !location || !photo) {
+    if (!phone || !location || (!photo && !imageFile)) {
       toast.error("Please complete all seller profile fields");
       return;
     }
 
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await updateSellerProfile(user.email, {
-  phone,
-  location,
-  photo,
-  status: "active",
-});
+      const uploadedPhotoUrl = await uploadImageToImgBB();
 
-    setLoading(false);
+      const res = await updateSellerProfile(user.email, {
+        phone,
+        location,
+        photo: uploadedPhotoUrl,
+        status: "active",
+      });
 
-    if (res.success) {
-      toast.success("Seller profile completed");
-      router.push("/dashboard/seller");
-      router.refresh();
-    } else {
-      toast.error(res.message || "Failed to update profile");
+      if (res.success) {
+        toast.success("Seller profile completed");
+        router.push("/dashboard/seller");
+        router.refresh();
+      } else {
+        toast.error(res.message || "Failed to update profile");
+      }
+    } catch (error) {
+      toast.error(error.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,8 +111,8 @@ const SellerProfileForm = ({ user }) => {
         <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col items-center text-center">
             <img
-              src={photo || "https://i.pravatar.cc/300?img=1"}
-              alt={user?.name}
+              src={preview || "https://i.pravatar.cc/300?img=1"}
+              alt={user?.name || "Seller"}
               className="h-28 w-28 rounded-full object-cover ring-4 ring-blue-100"
             />
 
@@ -148,17 +195,31 @@ const SellerProfileForm = ({ user }) => {
 
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-bold text-slate-700">
-                Photo URL
+                Profile Photo
               </label>
-              <div className="relative">
-                <Camera className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-blue-200 bg-blue-50/50 px-6 py-8 text-center transition hover:bg-blue-50">
+                <Upload className="mb-3 h-8 w-8 text-blue-600" />
+                <p className="text-sm font-bold text-slate-800">
+                  Click to upload seller photo
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  PNG, JPG, JPEG or WEBP
+                </p>
+
                 <input
-                  value={photo}
-                  onChange={(e) => setPhoto(e.target.value)}
-                  placeholder="https://i.pravatar.cc/300?img=1"
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-10 text-sm outline-none focus:border-blue-500 focus:bg-white"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
                 />
-              </div>
+              </label>
+
+              {imageFile && (
+                <p className="mt-2 text-sm font-medium text-slate-500">
+                  Selected: {imageFile.name}
+                </p>
+              )}
             </div>
           </div>
 
