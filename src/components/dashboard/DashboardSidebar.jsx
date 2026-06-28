@@ -45,7 +45,7 @@ export function DashboardSidebar({ role = "buyer" }) {
     { icon: Package, href: "/dashboard/admin/products", label: "Manage Products" },
     { icon: ClipboardList, href: "/dashboard/admin/orders", label: "Manage Orders" },
     { icon: BarChart3, href: "/dashboard/admin/analytics", label: "Platform Analytics" },
-    { icon: Settings, href: "/dashboard/admin/settings", label: "Settings" },
+    { icon: Settings, href: "/dashboard/admin/payments", label: "Payments" },
   ];
 
   const navItems =
