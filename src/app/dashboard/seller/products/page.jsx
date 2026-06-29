@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth"
 import { headers } from "next/headers";
 import { getSellerProducts } from "@/lib/actions/products";
 import SellerProductsClient from "./SellerProductsClient";

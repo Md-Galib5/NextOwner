@@ -1,47 +1,50 @@
 import ProductsClient from "./ProductsClient";
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
-async function getProducts(searchParams) {
-  const paramsData = await searchParams;
+async function getProducts(params = {}) {
+  try {
+    const query = new URLSearchParams({
+      page: params?.page || "1",
+      limit: params?.limit || "6",
+      search: params?.search || "",
+      category: params?.category || "all",
+      sort: params?.sort || "latest",
+    });
 
-  const page = paramsData?.page || "1";
-  const search = paramsData?.search || "";
-  const category = paramsData?.category || "all";
-  const sort = paramsData?.sort || "latest";
+    const res = await fetch(`${baseUrl}/api/products?${query.toString()}`, {
+      cache: "no-store",
+    });
 
-  const params = new URLSearchParams();
-  params.set("page", String(page));
-  params.set("limit", "6");
+    if (!res.ok) {
+      return { products: [], pagination: null };
+    }
 
-  if (search) params.set("search", search);
-  if (category !== "all") params.set("category", category);
-  if (sort !== "latest") params.set("sort", sort);
+    const data = await res.json();
 
-  const res = await fetch(`${baseUrl}/api/products?${params.toString()}`, {
-    cache: "no-store",
-  });
-
-  const data = await res.json();
-
-  console.log("PRODUCT API:", `${baseUrl}/api/products?${params.toString()}`);
-  console.log("PRODUCT DATA:", data);
-
-  return data;
+    return {
+      products: data?.products || [],
+      pagination: data?.pagination || null,
+    };
+  } catch (error) {
+    console.error("Failed to load products:", error);
+    return { products: [], pagination: null };
+  }
 }
 
-export default async function ProductsPage({ searchParams }) {
-  const paramsData = await searchParams;
-  const data = await getProducts(paramsData);
+export default async function Allproducts({ searchParams = {} }) {
+  const { products, pagination } = await getProducts(searchParams);
 
   return (
     <ProductsClient
-      products={data?.products || []}
-      pagination={data?.pagination || {}}
+      products={products}
+      pagination={pagination}
       filters={{
-        search: paramsData?.search || "",
-        category: paramsData?.category || "all",
-        sort: paramsData?.sort || "latest",
+        search: searchParams?.search || "",
+        category: searchParams?.category || "all",
+        sort: searchParams?.sort || "latest",
+        page: searchParams?.page || "1",
+        limit: searchParams?.limit || "6",
       }}
     />
   );

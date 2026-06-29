@@ -1,3 +1,68 @@
+// "use server";
+
+// const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+
+// export const getSellerProducts = async (email) => {
+//   try {
+//     const res = await fetch(`${baseUrl}/api/products/seller/${email}`, {
+//       cache: "no-store",
+//     });
+
+//     if (!res.ok) {
+//       return [];
+//     }
+
+//     return await res.json();
+//   } catch (error) {
+//     console.error("Get Seller Products Error:", error);
+//     return [];
+//   }
+// };
+
+// export const addproducts = async (newProductsData) => {
+//   try {
+//     const res = await fetch(`${baseUrl}/api/products`, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify(newProductsData),
+//       cache: "no-store",
+//     });
+
+//     const text = await res.text();
+
+//     let data;
+
+//     try {
+//       data = JSON.parse(text);
+//     } catch {
+//       console.error("Non JSON response:", text);
+
+//       return {
+//         success: false,
+//         message: "Backend is not returning JSON. Check POST /api/products route.",
+//       };
+//     }
+
+//     if (!res.ok) {
+//       return {
+//         success: false,
+//         message: data?.message || "Failed to add product",
+//       };
+//     }
+
+//     return data;
+//   } catch (error) {
+//     console.error("Add Product Error:", error);
+
+//     return {
+//       success: false,
+//       message: error.message,
+//     };
+//   }
+// };
+
 "use server";
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;

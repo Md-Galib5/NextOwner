@@ -44,6 +44,10 @@ export default function SellerProductsClient({
 }) {
   const router = useRouter();
 
+  const safeProducts = Array.isArray(products)
+    ? products
+    : products?.products || [];
+
   const [searchText, setSearchText] = useState(filters.search || "");
   const [deletingId, setDeletingId] = useState(null);
 
@@ -62,7 +66,10 @@ export default function SellerProductsClient({
       params.set("sort", nextSort);
     }
 
-    router.push(`/dashboard/seller/products?${params.toString()}`);
+    const query = params.toString();
+    router.push(
+      query ? `/dashboard/seller/products?${query}` : "/dashboard/seller/products"
+    );
   };
 
   const handleSearchSubmit = (e) => {
@@ -84,14 +91,14 @@ export default function SellerProductsClient({
 
       const res = await deleteProduct(id);
 
-      if (res.success && res.deletedCount > 0) {
+      if (res?.success && res?.deletedCount > 0) {
         toast.success("Product deleted successfully");
         router.refresh();
       } else {
-        toast.error(res.message || "Failed to delete product");
+        toast.error(res?.message || "Failed to delete product");
       }
-    } catch {
-      toast.error("Something went wrong");
+    } catch (error) {
+      toast.error(error?.message || "Something went wrong");
     } finally {
       setDeletingId(null);
     }
@@ -119,9 +126,9 @@ export default function SellerProductsClient({
             </h1>
 
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-              {products.length > 0
-                ? `Showing ${products.length} product${
-                    products.length > 1 ? "s" : ""
+              {safeProducts.length > 0
+                ? `Showing ${safeProducts.length} product${
+                    safeProducts.length > 1 ? "s" : ""
                   }.`
                 : "No products found for the current filters."}
             </p>
@@ -205,7 +212,7 @@ export default function SellerProductsClient({
         </button>
       </motion.div>
 
-      {products.length === 0 ? (
+      {safeProducts.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -223,9 +230,9 @@ export default function SellerProductsClient({
         </motion.div>
       ) : (
         <div className="space-y-4">
-          {products.map((product, index) => (
+          {safeProducts.map((product, index) => (
             <motion.article
-              key={product._id}
+              key={product._id || index}
               initial={{ opacity: 0, y: 22 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: index * 0.04 }}
@@ -235,8 +242,8 @@ export default function SellerProductsClient({
               <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center">
                 <div className="relative h-40 w-full overflow-hidden rounded-2xl bg-slate-100 lg:h-28 lg:w-40 lg:shrink-0">
                   <img
-                    src={product.images?.[0] || "/placeholder-product.png"}
-                    alt={product.title}
+                    src={product?.images?.[0] || "/placeholder-product.png"}
+                    alt={product?.title || "Product"}
                     className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
                   />
 
@@ -248,25 +255,25 @@ export default function SellerProductsClient({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-black uppercase text-blue-700">
-                      {product.category}
+                      {product?.category || "Uncategorized"}
                     </span>
 
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-black capitalize text-emerald-700">
                       <BadgeCheck className="h-3 w-3" />
-                      {product.status || "active"}
+                      {product?.status || "active"}
                     </span>
 
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold capitalize text-slate-700">
-                      {product.condition}
+                      {product?.condition || "Used"}
                     </span>
                   </div>
 
                   <h2 className="mt-3 line-clamp-1 text-xl font-black text-slate-950">
-                    {product.title}
+                    {product?.title || "Untitled Product"}
                   </h2>
 
                   <p className="mt-1 line-clamp-2 max-w-3xl text-sm leading-6 text-slate-500">
-                    {product.description}
+                    {product?.description || "No description available."}
                   </p>
                 </div>
 
@@ -278,7 +285,7 @@ export default function SellerProductsClient({
                     </div>
 
                     <p className="mt-1 text-lg font-black text-slate-950">
-                      ${product.price}
+                      ${product?.price || 0}
                     </p>
                   </div>
 
@@ -289,7 +296,7 @@ export default function SellerProductsClient({
                     </div>
 
                     <p className="mt-1 text-lg font-black text-slate-950">
-                      {product.stock}
+                      {product?.stock ?? 0}
                     </p>
                   </div>
                 </div>
@@ -311,6 +318,7 @@ export default function SellerProductsClient({
                   </Link>
 
                   <button
+                    type="button"
                     onClick={() => handleDelete(product._id)}
                     disabled={deletingId === product._id}
                     className="rounded-xl border border-slate-200 p-2.5 text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"

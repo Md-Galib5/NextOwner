@@ -5,6 +5,8 @@ import { Heart } from "lucide-react";
 import { toast } from "react-toastify";
 import { useSession } from "@/lib/auth-client";
 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
+
 export default function WishlistButton({ product }) {
   const { data: session, isPending } = useSession();
 
@@ -14,55 +16,44 @@ export default function WishlistButton({ product }) {
   const handleWishlist = async () => {
     if (loading || isPending || added) return;
 
+    const token = localStorage.getItem("nextowner-token");
+
+    if (!token) {
+      toast.error("Please login first");
+      return;
+    }
+
     if (!session?.user?.email) {
-      toast.error("Please login first", {
-        toastId: "wishlist-login-error",
-        autoClose: 2000,
-      });
+      toast.error("User email not found");
       return;
     }
 
     try {
       setLoading(true);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/wishlist`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userEmail: session.user.email,
-            product,
-          }),
-        }
-      );
+      const response = await fetch(`${baseUrl}/api/wishlist`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userEmail: session.user.email,
+          product,
+        }),
+      });
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (data?.success) {
         setAdded(true);
-
-        toast.success(data?.message || "Added to wishlist", {
-          toastId: `wishlist-added-${product?._id}`,
-          autoClose: 2000,
-        });
-
-        return;
+        toast.success(data?.message || "Added to wishlist");
+      } else {
+        toast.error(data?.message || "Failed to add wishlist");
       }
-
-      toast.error(data?.message || "Failed to add wishlist", {
-        toastId: `wishlist-error-${product?._id}`,
-        autoClose: 2000,
-      });
     } catch (error) {
       console.error(error);
-
-      toast.error("Something went wrong", {
-        toastId: `wishlist-catch-${product?._id}`,
-        autoClose: 2000,
-      });
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }
