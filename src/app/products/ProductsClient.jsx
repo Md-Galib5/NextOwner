@@ -33,30 +33,52 @@ const categories = [
 
 export default function ProductsClient({
   products = [],
+  pagination = null,
   filters = {
     search: "",
     category: "all",
     sort: "latest",
+    page: "1",
+    limit: "6",
   },
 }) {
   const router = useRouter();
   const { data: session, isPending } = useSession();
   const [searchText, setSearchText] = useState(filters.search || "");
 
-  const updateFilter = (key, value) => {
+  const buildQuery = (nextFilters = {}) => {
+    const merged = {
+      search: filters.search || "",
+      category: filters.category || "all",
+      sort: filters.sort || "latest",
+      page: filters.page || "1",
+      limit: filters.limit || "6",
+      ...nextFilters,
+    };
+
     const params = new URLSearchParams();
 
-    const nextSearch = key === "search" ? value : filters.search;
-    const nextCategory = key === "category" ? value : filters.category;
-    const nextSort = key === "sort" ? value : filters.sort;
-
-    if (nextSearch) params.set("search", nextSearch);
-    if (nextCategory && nextCategory !== "all") {
-      params.set("category", nextCategory);
+    if (merged.search) params.set("search", merged.search);
+    if (merged.category && merged.category !== "all") {
+      params.set("category", merged.category);
     }
-    if (nextSort && nextSort !== "latest") params.set("sort", nextSort);
+    if (merged.sort && merged.sort !== "latest") {
+      params.set("sort", merged.sort);
+    }
 
-    router.push(`/products?${params.toString()}`);
+    params.set("page", merged.page || "1");
+    params.set("limit", merged.limit || "6");
+
+    return params.toString();
+  };
+
+  const updateFilter = (key, value) => {
+    const query = buildQuery({
+      [key]: value,
+      page: "1",
+    });
+
+    router.push(`/products?${query}`);
   };
 
   const handleSearchSubmit = (e) => {
@@ -67,6 +89,14 @@ export default function ProductsClient({
   const clearFilters = () => {
     setSearchText("");
     router.push("/products");
+  };
+
+  const goToPage = (page) => {
+    const query = buildQuery({
+      page: String(page),
+    });
+
+    router.push(`/products?${query}`);
   };
 
   const handleBuyNow = (productId) => {
@@ -150,6 +180,7 @@ export default function ProductsClient({
                 className="w-full bg-transparent text-sm font-bold text-slate-700 outline-none"
               >
                 <option value="latest">Latest First</option>
+                <option value="oldest">Oldest First</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
               </select>
@@ -167,7 +198,7 @@ export default function ProductsClient({
             <p className="text-sm font-semibold text-slate-500">
               Showing{" "}
               <span className="font-black text-slate-950">
-                {products.length}
+                {pagination?.totalProducts || products.length}
               </span>{" "}
               products
             </p>
@@ -195,93 +226,149 @@ export default function ProductsClient({
             </p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {products.map((product) => (
-              <article
-                key={product._id}
-                className="group overflow-hidden rounded-[1.8rem] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-xl hover:shadow-slate-200"
-              >
-                <div className="relative h-56 overflow-hidden bg-slate-100">
-                  <img
-                    src={product.images?.[0] || "/placeholder-product.png"}
-                    alt={product.title}
-                    className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-                  />
+          <>
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {products.map((product) => (
+                <article
+                  key={product._id}
+                  className="group overflow-hidden rounded-[1.8rem] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-xl hover:shadow-slate-200"
+                >
+                  <div className="relative h-56 overflow-hidden bg-slate-100">
+                    <img
+                      src={product.images?.[0] || "/placeholder-product.png"}
+                      alt={product.title}
+                      className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                    />
 
-                  <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
-                    <span className="rounded-full bg-white/95 px-3 py-1 text-xs font-black text-indigo-700 shadow-sm backdrop-blur">
-                      {product.category}
-                    </span>
+                    <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
+                      <span className="rounded-full bg-white/95 px-3 py-1 text-xs font-black text-indigo-700 shadow-sm backdrop-blur">
+                        {product.category}
+                      </span>
 
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50/95 px-3 py-1 text-xs font-black text-emerald-700 shadow-sm">
-                      <BadgeCheck className="h-3.5 w-3.5" />
-                      {product.status || "available"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-5">
-                  <div className="min-h-[82px]">
-                    <h2 className="line-clamp-1 text-xl font-black text-slate-950">
-                      {product.title}
-                    </h2>
-
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
-                      {product.description}
-                    </p>
-                  </div>
-
-                  <div className="mt-5 grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-3">
-                      <div className="flex items-center gap-1.5 text-indigo-700">
-                        <DollarSign className="h-4 w-4" />
-                        <span className="text-xs font-bold">Price</span>
-                      </div>
-
-                      <p className="mt-1 text-lg font-black text-slate-950">
-                        ${product.price}
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                      <div className="flex items-center gap-1.5 text-slate-500">
-                        <Boxes className="h-4 w-4" />
-                        <span className="text-xs font-bold">Stock</span>
-                      </div>
-
-                      <p className="mt-1 text-lg font-black text-slate-950">
-                        {product.stock}
-                      </p>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50/95 px-3 py-1 text-xs font-black text-emerald-700 shadow-sm">
+                        <BadgeCheck className="h-3.5 w-3.5" />
+                        {product.status || "available"}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="mt-5 space-y-3">
-                    <Link
-                      href={`/products/${product._id}`}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-                    >
-                      <Eye className="h-4 w-4" />
-                      View Details
-                    </Link>
+                  <div className="p-5">
+                    <div className="min-h-[82px]">
+                      <h2 className="line-clamp-1 text-xl font-black text-slate-950">
+                        {product.title}
+                      </h2>
 
-                    <div className="grid grid-cols-2 gap-3">
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
+                        {product.description}
+                      </p>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-3">
+                        <div className="flex items-center gap-1.5 text-indigo-700">
+                          <DollarSign className="h-4 w-4" />
+                          <span className="text-xs font-bold">Price</span>
+                        </div>
+
+                        <p className="mt-1 text-lg font-black text-slate-950">
+                          ${product.price}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                        <div className="flex items-center gap-1.5 text-slate-500">
+                          <Boxes className="h-4 w-4" />
+                          <span className="text-xs font-bold">Stock</span>
+                        </div>
+
+                        <p className="mt-1 text-lg font-black text-slate-950">
+                          {product.stock}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 space-y-3">
+                      <Link
+                        href={`/products/${product._id}`}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View Details
+                      </Link>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleBuyNow(product._id)}
+                          disabled={isPending}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-200 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <ShoppingCart className="h-4 w-4" />
+                          Buy Now
+                        </button>
+
+                        <WishlistButton product={product} />
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            {pagination && pagination.totalPages > 1 && (
+              <div className="flex flex-col items-center justify-between gap-4 rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm sm:flex-row">
+                <p className="text-sm font-bold text-slate-500">
+                  Page{" "}
+                  <span className="text-slate-950">
+                    {pagination.currentPage}
+                  </span>{" "}
+                  of{" "}
+                  <span className="text-slate-950">
+                    {pagination.totalPages}
+                  </span>
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    disabled={!pagination.hasPrevPage}
+                    onClick={() => goToPage(pagination.currentPage - 1)}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+
+                  {[...Array(pagination.totalPages)].map((_, index) => {
+                    const page = index + 1;
+
+                    return (
                       <button
                         type="button"
-                        onClick={() => handleBuyNow(product._id)}
-                        disabled={isPending}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-200 disabled:cursor-not-allowed disabled:opacity-60"
+                        key={page}
+                        onClick={() => goToPage(page)}
+                        className={`h-10 w-10 rounded-xl text-sm font-black transition ${
+                          page === pagination.currentPage
+                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
+                            : "border border-slate-200 bg-white text-slate-700 hover:bg-indigo-50 hover:text-indigo-700"
+                        }`}
                       >
-                        <ShoppingCart className="h-4 w-4" />
-                        Buy Now
+                        {page}
                       </button>
+                    );
+                  })}
 
-                      <WishlistButton product={product} />
-                    </div>
-                  </div>
+                  <button
+                    type="button"
+                    disabled={!pagination.hasNextPage}
+                    onClick={() => goToPage(pagination.currentPage + 1)}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Next
+                  </button>
                 </div>
-              </article>
-            ))}
-          </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>
