@@ -1,16 +1,16 @@
-'use client'
-import FeaturedProducts from '@/components/FeaturedProducts';
-import HeroBanner from '@/components/HeroBanner';
-import React from 'react';
+import HeroBanner from "@/components/HeroBanner";
+import FeaturedProducts from "@/components/home/FeaturedProducts";
+import { getFeaturedProducts } from "@/lib/api/products";
 
-const page = () => {
+
+export default async function HomePage() {
+  const products = await getFeaturedProducts();
+
   return (
     <div>
       <HeroBanner />
-      <FeaturedProducts />
 
+      <FeaturedProducts products={products} />
     </div>
   );
-};
-
-export default page;
+}
