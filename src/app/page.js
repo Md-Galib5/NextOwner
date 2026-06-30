@@ -1,12 +1,17 @@
 import HeroBanner from "@/components/HeroBanner";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import PopularCategories from "@/components/home/PopularCategories";
-import { getFeaturedProducts } from "@/lib/api/products";
+import SuccessStories from "@/components/home/SuccessStories";
+import {
+  getFeaturedProducts,
+  getPopularCategories,
+} from "@/lib/api/products";
 
 
 export default async function HomePage() {
   const products = await getFeaturedProducts();
   const categories = await getPopularCategories();
+
 
   return (
     <div>
@@ -14,6 +19,7 @@ export default async function HomePage() {
 
       <FeaturedProducts products={products} />
       <PopularCategories categories={categories} />
+      <SuccessStories />
     </div>
   );
 }
