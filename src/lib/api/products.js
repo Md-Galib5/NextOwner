@@ -130,15 +130,27 @@ export const addproducts = async (newProductsData) => {
 
 export const getFeaturedProducts = async () => {
   try {
-    const res = await fetch(
-      `${process.env.baseUrl}/api/products?page=1&limit=6&sort=latest`,
-      { cache: "no-store" }
-    );
+    const res = await fetch(`${baseUrl}/api/products/featured`, {
+      cache: "no-store",
+    });
 
     const data = await res.json();
     return data?.products || [];
   } catch (error) {
     console.log("Featured products error:", error);
+    return [];
+  }
+};
+
+export const getPopularCategories = async () => {
+  try {
+    const res = await fetch(`${baseUrl}/api/categories/popular`, {
+      cache: "no-store",
+    });
+
+    const data = await res.json();
+    return data?.categories || [];
+  } catch (error) {
     return [];
   }
 };
