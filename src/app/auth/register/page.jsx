@@ -79,23 +79,23 @@ export default function RegisterPage() {
     }
   };
 
-  const handleGoogleSignup = async () => {
-    setError("");
-    setSuccess("");
-    setGoogleLoading(true);
+const handleGoogleSignup = async () => {
+  setError("");
+  setSuccess("");
+  setGoogleLoading(true);
 
-    try {
-      localStorage.setItem("nextowner-role", role);
+  try {
+    localStorage.setItem("nextowner-role", role);
 
-      await signIn.social({
-        provider: "google",
-        callbackURL: redirectTo,
-      });
-    } catch (err) {
-      setError(err?.message || "Google sign up failed.");
-      setGoogleLoading(false);
-    }
-  };
+    await signIn.social({
+      provider: "google",
+      callbackURL: `/auth/google-callback?redirect=${redirectTo}`,
+    });
+  } catch (err) {
+    setError(err?.message || "Google sign up failed.");
+    setGoogleLoading(false);
+  }
+};
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-100 px-4 py-10">
