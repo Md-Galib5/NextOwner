@@ -15,6 +15,9 @@ import {
   AlertCircle,
 } from "lucide-react";
 import WishlistButton from "@/components/products/WishlistButton";
+import { getProductReviews } from "@/lib/api/products";
+import ReviewForm from "@/components/products/ReviewForm";
+import ReviewsList from "@/components/products/ReviewList";
 
 const getProductById = async (id) => {
   const res = await fetch(
@@ -29,6 +32,7 @@ export default async function ProductsDetailsPage({ params }) {
   const { id } = await params;
   const product = await getProductById(id);
 
+  const reviews = await getProductReviews(id);
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -125,7 +129,7 @@ export default async function ProductsDetailsPage({ params }) {
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-4 py-2 text-sm font-bold text-cyan-700">
           <ShieldCheck className="h-4 w-4" />
           Seller Information
@@ -135,13 +139,14 @@ export default async function ProductsDetailsPage({ params }) {
           <InfoCard icon={User} label="Name" value={product?.sellerInfo?.name} />
           <InfoCard icon={Mail} label="Email" value={product?.sellerInfo?.email} />
           <InfoCard icon={Phone} label="Phone" value={product?.sellerInfo?.phone} />
-          <InfoCard
-            icon={MapPin}
-            label="Location"
-            value={product?.sellerInfo?.location}
-          />
+          <InfoCard icon={MapPin} label="Location" value={product?.sellerInfo?.location} />
         </div>
       </div>
+
+      <section className="space-y-6">
+        <ReviewForm productId={product?._id?.toString()} user={session?.user} />
+        <ReviewsList reviews={reviews || []} />
+      </section>
     </section>
   );
 }

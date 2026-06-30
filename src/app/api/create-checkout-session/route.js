@@ -15,10 +15,10 @@ export async function POST(req) {
           quantity: 1,
           price_data: {
             currency: "usd",
-            unit_amount: Math.round(Number(productInfo?.price) * 100),
+            unit_amount: Math.round(Number(productInfo?.price || 0) * 100),
             product_data: {
               name: productInfo?.title || "NextOwner Product",
-              description: productInfo?.description || "",
+              description: String(productInfo?.description || "").slice(0, 500),
               images: productInfo?.image ? [productInfo.image] : [],
             },
           },
@@ -26,9 +26,12 @@ export async function POST(req) {
       ],
 
       metadata: {
-        buyerInfo: JSON.stringify(buyerInfo),
-        sellerInfo: JSON.stringify(sellerInfo),
-        productInfo: JSON.stringify(productInfo),
+        buyerEmail: String(buyerInfo?.email || ""),
+        buyerName: String(buyerInfo?.name || "").slice(0, 100),
+        sellerEmail: String(sellerInfo?.email || ""),
+        sellerName: String(sellerInfo?.name || "").slice(0, 100),
+        productId: String(productInfo?.productId || productInfo?._id || ""),
+        productTitle: String(productInfo?.title || "").slice(0, 100),
       },
 
       success_url: `${process.env.BETTER_AUTH_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
